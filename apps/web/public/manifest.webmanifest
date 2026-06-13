@@ -1,0 +1,9 @@
+{
+  "name": "每日打卡",
+  "short_name": "打卡",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f7f5",
+  "theme_color": "#2f8f83",
+  "lang": "zh-CN"
+}

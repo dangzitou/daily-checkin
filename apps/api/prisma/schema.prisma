@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique @db.VarChar(64)
+  email        String?   @unique @db.VarChar(191)
+  passwordHash String    @map("password_hash") @db.VarChar(191)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  tasks        Task[]
+  checkins     Checkin[]
+  goals        Goal[]
+
+  @@map("users")
+}
+
+model Task {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  title        String    @db.VarChar(120)
+  description  String?   @db.VarChar(500)
+  scope        String    @default("resident") @db.VarChar(16)
+  scheduledDate String?  @map("scheduled_date") @db.VarChar(10)
+  reminderTime String?   @map("reminder_time") @db.VarChar(5)
+  isActive     Boolean   @default(true) @map("is_active")
+  sortOrder    Int       @default(0) @map("sort_order")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkins     Checkin[]
+  goals        Goal[]
+
+  @@index([userId])
+  @@index([userId, scope, scheduledDate])
+  @@map("tasks")
+}
+
+model Goal {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  taskId      Int      @map("task_id")
+  title       String   @db.VarChar(120)
+  description String?  @db.VarChar(500)
+  startDate   String   @map("start_date") @db.VarChar(10)
+  targetDate  String   @map("target_date") @db.VarChar(10)
+  targetCount Int      @map("target_count")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([taskId])
+  @@map("goals")
+}
+
+model Checkin {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  taskId      Int      @map("task_id")
+  checkinDate String   @map("checkin_date") @db.VarChar(10)
+  checkedAt   DateTime @default(now()) @map("checked_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId, checkinDate])
+  @@index([userId, checkinDate])
+  @@map("checkins")
+}
