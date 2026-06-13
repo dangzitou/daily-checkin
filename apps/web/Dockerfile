@@ -8,7 +8,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY apps/api/package.json apps/api/package.json
 RUN pnpm install --frozen-lockfile
 COPY apps/web apps/web
-RUN pnpm --filter @wife-checkin/web build
+RUN pnpm --filter @daily-checkin/web build
 
 FROM nginx:1.27-alpine
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf

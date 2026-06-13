@@ -12,9 +12,9 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY apps/api apps/api
-RUN pnpm --filter @wife-checkin/api prisma:generate
-RUN pnpm --filter @wife-checkin/api build
-RUN pnpm deploy --legacy --filter @wife-checkin/api --prod /prod/api
+RUN pnpm --filter @daily-checkin/api prisma:generate
+RUN pnpm --filter @daily-checkin/api build
+RUN pnpm deploy --legacy --filter @daily-checkin/api --prod /prod/api
 
 FROM node:22-bookworm AS runtime
 ENV NODE_ENV=production

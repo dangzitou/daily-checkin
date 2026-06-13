@@ -1,5 +1,5 @@
 {
-  "name": "@wife-checkin/api",
+  "name": "@daily-checkin/api",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",

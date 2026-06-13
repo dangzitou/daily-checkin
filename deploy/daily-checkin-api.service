@@ -1,0 +1,21 @@
+[Unit]
+Description=Wife Checkin API
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+
+[Service]
+Type=simple
+User=agentuser
+Group=agentuser
+WorkingDirectory=/home/agentuser/workspace/daily-checkin
+EnvironmentFile=/etc/daily-checkin.env
+ExecStartPre=/usr/bin/docker start daily-checkin-mysql
+ExecStartPre=/usr/bin/docker start daily-checkin-redis
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do /usr/bin/docker exec daily-checkin-mysql mysqladmin ping -h 127.0.0.1 -uroot -pchange-root --silent && exit 0; sleep 2; done; exit 1'
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do /usr/bin/docker exec daily-checkin-redis redis-cli ping >/dev/null && exit 0; sleep 1; done; exit 1'
+ExecStart=/usr/bin/node apps/api/dist/main.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

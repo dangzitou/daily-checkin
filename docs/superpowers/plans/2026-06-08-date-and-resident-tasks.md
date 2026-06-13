@@ -22,7 +22,7 @@
 - [ ] Add task scope and scheduled date fields. Existing rows migrate to `resident`; dated rows require `scheduled_date`.
 - [ ] Add `isTaskVisibleOnDate()` tests for resident tasks, dated tasks, inactive tasks, and mismatched dates.
 - [ ] Implement visibility helper and date validation.
-- [ ] Run `pnpm --filter @wife-checkin/api test:run src/domain/task-visibility.test.ts`.
+- [ ] Run `pnpm --filter @daily-checkin/api test:run src/domain/task-visibility.test.ts`.
 
 ### Task 2: API Date-Aware Task Lists And Checkins
 
@@ -64,8 +64,8 @@
 
 **Files:**
 - Modify: `README.md`
-- Runtime: `/etc/wife-checkin.env`, systemd services, MySQL migration
+- Runtime: `/etc/daily-checkin.env`, systemd services, MySQL migration
 
 - [ ] Run full test suite and build.
-- [ ] Run Prisma migration deploy and restart `wife-checkin-api` and `wife-checkin-public`.
+- [ ] Run Prisma migration deploy and restart `daily-checkin-api` and `daily-checkin-public`.
 - [ ] Verify `http://42.194.251.188/`, `/api/health`, resident task flow, dated calendar task flow, and public iPhone viewport flow.

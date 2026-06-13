@@ -1,83 +1,172 @@
-# 每日打卡
+# Daily Checkin 📅
 
-给 iPhone H5 使用的家庭私用任务打卡系统。前端使用 Vue 3，后端使用 NestJS，数据保存到 MySQL，Redis 用于提醒去重，Docker Compose 在本机 80 端口部署。注册只需要用户名和密码，登录支持用户名或用户 ID。
+A lightweight daily habit tracking and task management app built with Vue 3 and NestJS.
 
-现在任务分两类：
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Vue 3](https://img.shields.io/badge/Vue-3.x-brightgreen.svg)](https://vuejs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-10.x-red.svg)](https://nestjs.com/)
 
-- 常驻任务：长期每天出现，例如喝水、运动、早睡。
-- 当天任务：点日历中的某一天后，只给那一天添加的任务，例如买花、体检、整理房间。
+## ✨ Features
 
-## 本机运行
+- **Daily Checkin** - Track daily habits with streak counting
+- **Task Management** - Support both recurring and one-time tasks
+- **Calendar View** - Visual overview of your progress
+- **Goal Setting** - Set and track weekly/monthly goals
+- **Email Reminders** - Optional SMTP notifications
+- **Responsive Design** - Works great on mobile (PWA ready)
+- **Self-hosted** - Full control over your data
+
+## 📸 Screenshots
+
+| Today | Calendar | Goals |
+|-------|----------|-------|
+| ![Today](docs/screenshots/today.png) | ![Calendar](docs/screenshots/calendar.png) | ![Goals](docs/screenshots/goals.png) |
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm 8+
+- Docker & Docker Compose (for production)
+
+### Local Development
 
 ```bash
-cp .env.example .env
+# Clone the repository
+git clone https://github.com/dangzitou/daily-checkin.git
+cd daily-checkin
+
+# Install dependencies
 pnpm install
-pnpm --filter @wife-checkin/api prisma:generate
-pnpm test:run
-pnpm build
+
+# Setup environment
+cp .env.example .env
+
+# Generate Prisma client
+pnpm --filter @daily-checkin/api prisma:generate
+
+# Run tests
+pnpm test
+
+# Start development servers
+pnpm dev
 ```
 
-## Docker 部署
+The API will be available at `http://localhost:3000` and the web app at `http://localhost:5173`.
+
+### Production Deployment
 
 ```bash
+# Copy and edit environment file
 cp .env.example .env
+# Edit .env with your database credentials and secrets
+
+# Start with Docker Compose
 docker compose up -d --build
 ```
 
-访问：
+Access the app at `http://localhost/`
 
-- 本机：`http://localhost/`
-- iPhone：同一局域网内访问本机 IP，例如 `http://192.168.1.10/`
+## 📁 Project Structure
 
-默认按本机 HTTP 部署，`COOKIE_SECURE=false`。如果以后放到 HTTPS 域名下，再改成 `COOKIE_SECURE=true`。
-
-如果本机 80 端口已被其他服务占用，可以临时指定端口：
-
-```bash
-WEB_PORT=18080 docker compose up -d --build
+```
+daily-checkin/
+├── apps/
+│   ├── api/                    # NestJS backend
+│   │   ├── prisma/            # Database schema & migrations
+│   │   └── src/
+│   │       ├── domain/        # Business logic
+│   │       └── modules/       # NestJS modules
+│   │           ├── auth/      # Authentication
+│   │           ├── checkins/  # Checkin records
+│   │           ├── goals/     # Goal management
+│   │           ├── stats/     # Statistics
+│   │           └── tasks/     # Task management
+│   └── web/                   # Vue 3 frontend
+│       └── src/
+│           ├── components/    # Vue components
+│           ├── views/         # Page views
+│           └── stores/        # Pinia stores
+├── deploy/                    # Deployment configs
+└── docs/                      # Documentation
 ```
 
-## 当前公网部署
+## 🛠 Tech Stack
 
-当前这台腾讯云机器使用本机 Node + MySQL/Redis 容器部署，公网入口是：
+### Backend
+- **Framework**: NestJS 10
+- **Database**: MySQL 8 + Prisma ORM
+- **Cache**: Redis
+- **Language**: TypeScript 5
 
-```text
-http://42.194.251.188/
-```
+### Frontend
+- **Framework**: Vue 3 + Vite
+- **State**: Pinia
+- **Router**: Vue Router 4
+- **Styling**: CSS (no framework dependency)
 
-使用方式：
+### DevOps
+- **Container**: Docker + Docker Compose
+- **Reverse Proxy**: Nginx
+- **CI/CD**: GitHub Actions
 
-- 今日页：打今天的常驻任务和今天的当天任务。
-- 日历页：点击任意一天，给该日期添加任务，也可以补打卡。
-- 常驻任务页：维护每天都会出现的中长期任务。
+## 📖 API Documentation
 
-服务管理：
+The API follows RESTful conventions:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/register` | POST | Register new user |
+| `/api/auth/login` | POST | Login (username or ID) |
+| `/api/tasks` | GET/POST | List/Create tasks |
+| `/api/checkins` | POST | Record a checkin |
+| `/api/goals` | GET/POST | List/Create goals |
+| `/api/stats` | GET | Get statistics |
+
+## 🔧 Configuration
+
+Environment variables in `.env`:
 
 ```bash
-sudo systemctl status wife-checkin-api wife-checkin-public
-sudo systemctl restart wife-checkin-api wife-checkin-public
-docker start wife-checkin-mysql wife-checkin-redis
-```
+# Database
+DATABASE_URL=mysql://user:password@localhost:3306/daily_checkin
 
-运行时配置在 `/etc/wife-checkin.env`，模板在 `deploy/wife-checkin.env.example`。
+# Redis
+REDIS_URL=redis://localhost:6379
 
-原先占用 80 端口的 `sub2api` 容器已停止但未删除，需要恢复时运行：
+# Auth
+JWT_SECRET=your-secret-key
+COOKIE_SECURE=false  # Set to true for HTTPS
 
-```bash
-docker start sub2api
-```
-
-## 邮件提醒
-
-在 `.env` 配置 SMTP：
-
-```bash
+# SMTP (optional)
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
-SMTP_SECURE=false
 SMTP_USER=your-user
 SMTP_PASS=your-password
-SMTP_FROM="打卡提醒 <noreply@example.com>"
 ```
 
-未配置 SMTP 时，注册、登录、建任务、打卡、日历和统计仍可正常使用，只是不发送邮件提醒。
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) first.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [NestJS](https://nestjs.com/) and [Vue.js](https://vuejs.org/)
+- Inspired by habit tracking methodologies
+- UI components designed for mobile-first experience
+
+## 📧 Contact
+
+- GitHub: [@dangzitou](https://github.com/dangzitou)

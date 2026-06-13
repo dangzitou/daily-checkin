@@ -1,13 +1,13 @@
 [Unit]
 Description=Wife Checkin Public H5 Entry
-After=network-online.target wife-checkin-api.service
-Wants=network-online.target wife-checkin-api.service
+After=network-online.target daily-checkin-api.service
+Wants=network-online.target daily-checkin-api.service
 
 [Service]
 Type=simple
 User=agentuser
 Group=agentuser
-WorkingDirectory=/home/agentuser/workspace/wife-checkin
+WorkingDirectory=/home/agentuser/workspace/daily-checkin
 Environment=PUBLIC_PORT=80
 Environment=API_TARGET=http://127.0.0.1:3000
 AmbientCapabilities=CAP_NET_BIND_SERVICE

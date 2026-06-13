@@ -89,5 +89,5 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`wife-checkin public server listening on http://0.0.0.0:${port}`);
+  console.log(`daily-checkin public server listening on http://0.0.0.0:${port}`);
 });
