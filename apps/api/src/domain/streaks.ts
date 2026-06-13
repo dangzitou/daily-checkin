@@ -1,3 +1,5 @@
+import { previousDate } from './dates';
+
 export interface StreakInput {
   today: string;
   completedDates: string[];
@@ -6,21 +8,6 @@ export interface StreakInput {
 export interface StreakResult {
   current: number;
   best: number;
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function toUtcDay(date: string): number {
-  const [year, month, day] = date.split('-').map(Number);
-  return Date.UTC(year, month - 1, day);
-}
-
-function formatUtcDay(value: number): string {
-  return new Date(value).toISOString().slice(0, 10);
-}
-
-export function previousDate(date: string): string {
-  return formatUtcDay(toUtcDay(date) - DAY_MS);
 }
 
 export function calculateStreaks(input: StreakInput): StreakResult {

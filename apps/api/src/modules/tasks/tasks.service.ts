@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { todayInShanghai } from '../../domain/dates';
-import { validateIsoDate, type TaskScope } from '../../domain/task-visibility';
+import { type TaskScope } from '../../domain/task-visibility';
+import { validateIsoDateForRequest } from '../../shared/iso-date';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -106,22 +107,18 @@ export class TasksService {
 
   async ensureOwnedTask(userId: number, taskId: number) {
     const task = await this.prisma.task.findFirst({
-      where: { id: taskId, userId, isActive: true }
+      where: { id: taskId, userId }
     });
 
     if (!task) {
       throw new NotFoundException('任务不存在');
     }
 
-    return task;
-  }
-}
+    if (!task.isActive) {
+      throw new BadRequestException('任务已停用');
+    }
 
-function validateIsoDateForRequest(date: string): string {
-  try {
-    return validateIsoDate(date);
-  } catch {
-    throw new BadRequestException('日期格式不正确');
+    return task;
   }
 }
 

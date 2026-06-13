@@ -1,6 +1,5 @@
 import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -19,8 +18,6 @@ export class AuthService {
     private readonly prisma: PrismaService,
     @Inject(JwtService)
     private readonly jwt: JwtService,
-    @Inject(ConfigService)
-    private readonly config: ConfigService
   ) {}
 
   async register(input: { username: string; email?: string | null; password: string }): Promise<PublicUser> {
@@ -60,10 +57,6 @@ export class AuthService {
 
     const token = this.jwt.sign(
       { sub: user.id, username: user.username },
-      {
-        secret: this.config.get<string>('JWT_SECRET') ?? 'dev-secret',
-        expiresIn: '30d'
-      }
     );
 
     return {

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import type { RequestWithUser } from '../auth/current-user';
 import { CreateTaskDto, ListTasksQueryDto, UpdateTaskDto } from './tasks.dto';
@@ -20,12 +20,12 @@ export class TasksController {
   }
 
   @Patch(':id')
-  update(@Req() request: RequestWithUser, @Param('id') id: string, @Body() dto: UpdateTaskDto) {
-    return this.tasks.update(request.user.id, Number(id), dto);
+  update(@Req() request: RequestWithUser, @Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTaskDto) {
+    return this.tasks.update(request.user.id, id, dto);
   }
 
   @Delete(':id')
-  delete(@Req() request: RequestWithUser, @Param('id') id: string) {
-    return this.tasks.deactivate(request.user.id, Number(id));
+  delete(@Req() request: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
+    return this.tasks.deactivate(request.user.id, id);
   }
 }

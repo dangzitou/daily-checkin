@@ -12,6 +12,8 @@ import {
 import { RedemptionsService } from './redemptions.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
+import { UpdateStatusDto } from './redemptions.dto';
+import type { RequestWithUser } from '../auth/current-user';
 
 @Controller('redemptions')
 @UseGuards(AuthGuard)
@@ -19,12 +21,12 @@ export class RedemptionsController {
   constructor(private redemptionsService: RedemptionsService) {}
 
   @Post()
-  async redeem(@Request() req: any, @Body('prizeId', ParseIntPipe) prizeId: number) {
+  async redeem(@Request() req: RequestWithUser, @Body('prizeId', ParseIntPipe) prizeId: number) {
     return this.redemptionsService.redeem(req.user.id, prizeId);
   }
 
   @Get('my')
-  async getMyRedemptions(@Request() req: any) {
+  async getMyRedemptions(@Request() req: RequestWithUser) {
     return this.redemptionsService.getUserRedemptions(req.user.id);
   }
 
@@ -38,8 +40,8 @@ export class RedemptionsController {
   @UseGuards(AdminGuard)
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body('status') status: string,
+    @Body() dto: UpdateStatusDto,
   ) {
-    return this.redemptionsService.updateStatus(id, status);
+    return this.redemptionsService.updateStatus(id, dto.status);
   }
 }

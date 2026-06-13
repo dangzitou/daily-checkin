@@ -19,7 +19,11 @@ describe('CheckinsService', () => {
         ])
       }
     };
-    const service = new CheckinsService(prisma as never, {} as never);
+    const pointsService = {
+      addCheckinPoints: vi.fn(),
+      deductCheckinPoints: vi.fn(),
+    };
+    const service = new CheckinsService(prisma as never, {} as never, pointsService as never);
 
     await expect(service.calendar(7, '2026-06')).resolves.toEqual({
       '2026-06-12': {

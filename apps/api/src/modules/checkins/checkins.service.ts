@@ -1,6 +1,7 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { monthBounds, todayInShanghai } from '../../domain/dates';
-import { isTaskVisibleOnDate, validateIsoDate } from '../../domain/task-visibility';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { monthBounds, todayInShanghai, previousDate } from '../../domain/dates';
+import { isTaskVisibleOnDate } from '../../domain/task-visibility';
+import { validateIsoDateForRequest } from '../../shared/iso-date';
 import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from '../tasks/tasks.service';
 import { PointsService, POINTS_PER_CHECKIN, STREAK_BONUS_THRESHOLD, STREAK_BONUS_POINTS } from '../points/points.service';
@@ -180,22 +181,16 @@ export class CheckinsService {
       select: { checkinDate: true },
     });
 
-    let streak = 1;
-    let expectedDate = currentDate;
+    const dateSet = new Set(checkins.map((c) => c.checkinDate));
+    let streak = 0;
+    let cursor = currentDate;
 
-    for (const checkin of checkins) {
-      if (checkin.checkinDate === expectedDate) {
-        // Calculate previous day
-        const date = new Date(expectedDate);
-        date.setDate(date.getDate() - 1);
-        expectedDate = date.toISOString().split('T')[0];
-        streak++;
-      } else if (checkin.checkinDate < expectedDate) {
-        break;
-      }
+    while (dateSet.has(cursor)) {
+      streak++;
+      cursor = previousDate(cursor);
     }
 
-    return streak - 1; // Subtract 1 because we counted the current day
+    return streak;
   }
 
   private async ensureVisibleTask(userId: number, taskId: number, date: string) {
@@ -219,13 +214,5 @@ export class CheckinsService {
     }
 
     return task;
-  }
-}
-
-function validateIsoDateForRequest(date: string): string {
-  try {
-    return validateIsoDate(date);
-  } catch {
-    throw new BadRequestException('日期格式不正确');
   }
 }

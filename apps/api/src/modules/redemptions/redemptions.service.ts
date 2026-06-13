@@ -15,29 +15,30 @@ export class RedemptionsService {
     const prize = await this.prizesService.findOne(prizeId);
 
     if (!prize.isActive) {
-      throw new BadRequestException('Prize is not available');
+      throw new BadRequestException('奖品已下架');
     }
 
     if (prize.stock <= 0) {
-      throw new BadRequestException('Prize is out of stock');
+      throw new BadRequestException('奖品库存不足');
     }
 
     const balance = await this.pointsService.getBalance(userId);
     if (balance < prize.pointsCost) {
-      throw new BadRequestException('Insufficient points');
+      throw new BadRequestException('积分不足');
     }
 
-    // Execute redemption in transaction
+    // Execute redemption in transaction — all operations use the same tx for atomicity
     const redemption = await this.prisma.$transaction(async (tx) => {
-      // Deduct points
-      await this.pointsService.deductPoints(
+      // Deduct points within the transaction
+      await this.pointsService.deductPointsTx(
+        tx,
         userId,
         prize.pointsCost,
         `兑换奖品：${prize.name}`,
       );
 
-      // Decrement stock
-      await this.prizesService.decrementStock(prizeId);
+      // Decrement stock within the transaction (with stock > 0 guard)
+      await this.prizesService.decrementStockTx(tx, prizeId);
 
       // Create redemption record
       return tx.redemption.create({

@@ -1,3 +1,5 @@
+import { toUtcDay } from './dates';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type GoalStatus = 'active' | 'completed' | 'overdue';
@@ -39,9 +41,4 @@ export function summarizeGoalProgress(input: GoalProgressInput): GoalProgressSum
 
 function diffDays(start: string, end: string): number {
   return Math.floor((toUtcDay(end) - toUtcDay(start)) / DAY_MS);
-}
-
-function toUtcDay(date: string): number {
-  const [year, month, day] = date.split('-').map(Number);
-  return Date.UTC(year, month - 1, day);
 }

@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export const POINTS_PER_CHECKIN = 10;
@@ -32,7 +33,7 @@ export class PointsService {
   async deductPoints(userId: number, amount: number, reason: string): Promise<void> {
     const balance = await this.getBalance(userId);
     if (balance < amount) {
-      throw new Error('Insufficient points');
+      throw new BadRequestException('积分不足');
     }
 
     await this.prisma.$transaction([
@@ -41,6 +42,35 @@ export class PointsService {
         data: { points: { decrement: amount } },
       }),
       this.prisma.pointLog.create({
+        data: { userId, amount: -amount, reason },
+      }),
+    ]);
+  }
+
+  /**
+   * 在已有事务中扣除积分，用于需要原子性的多步操作（如兑换）。
+   */
+  async deductPointsTx(
+    tx: Prisma.TransactionClient,
+    userId: number,
+    amount: number,
+    reason: string,
+  ): Promise<void> {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { points: true },
+    });
+    const balance = user?.points ?? 0;
+    if (balance < amount) {
+      throw new BadRequestException('积分不足');
+    }
+
+    await Promise.all([
+      tx.user.update({
+        where: { id: userId },
+        data: { points: { decrement: amount } },
+      }),
+      tx.pointLog.create({
         data: { userId, amount: -amount, reason },
       }),
     ]);

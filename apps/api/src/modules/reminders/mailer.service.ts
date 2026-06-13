@@ -5,11 +5,29 @@ import nodemailer from 'nodemailer';
 @Injectable()
 export class MailerService {
   private readonly logger = new Logger(MailerService.name);
+  private transporter: nodemailer.Transporter | null = null;
 
   constructor(@Inject(ConfigService) private readonly config: ConfigService) {}
 
   get configured(): boolean {
     return Boolean(this.config.get<string>('SMTP_HOST') && this.config.get<string>('SMTP_FROM'));
+  }
+
+  private getTransporter(): nodemailer.Transporter {
+    if (!this.transporter) {
+      this.transporter = nodemailer.createTransport({
+        host: this.config.get<string>('SMTP_HOST'),
+        port: Number(this.config.get<string>('SMTP_PORT') ?? 587),
+        secure: this.config.get<string>('SMTP_SECURE') === 'true',
+        auth: this.config.get<string>('SMTP_USER')
+          ? {
+              user: this.config.get<string>('SMTP_USER'),
+              pass: this.config.get<string>('SMTP_PASS')
+            }
+          : undefined
+      });
+    }
+    return this.transporter;
   }
 
   async sendTaskReminder(input: { to: string; username: string; taskTitle: string }) {
@@ -18,17 +36,7 @@ export class MailerService {
       return;
     }
 
-    const transporter = nodemailer.createTransport({
-      host: this.config.get<string>('SMTP_HOST'),
-      port: Number(this.config.get<string>('SMTP_PORT') ?? 587),
-      secure: this.config.get<string>('SMTP_SECURE') === 'true',
-      auth: this.config.get<string>('SMTP_USER')
-        ? {
-            user: this.config.get<string>('SMTP_USER'),
-            pass: this.config.get<string>('SMTP_PASS')
-          }
-        : undefined
-    });
+    const transporter = this.getTransporter();
 
     await transporter.sendMail({
       from: this.config.get<string>('SMTP_FROM'),

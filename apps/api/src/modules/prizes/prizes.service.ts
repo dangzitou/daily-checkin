@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePrizeDto, UpdatePrizeDto } from './prizes.dto';
 
@@ -57,5 +58,17 @@ export class PrizesService {
       where: { id },
       data: { stock: { decrement: 1 } },
     });
+  }
+
+  /**
+   * 在已有事务中扣减库存，使用 WHERE stock > 0 防止负库存。
+   */
+  async decrementStockTx(tx: Prisma.TransactionClient, id: number) {
+    const updated = await tx.$executeRaw`
+      UPDATE Prize SET stock = stock - 1 WHERE id = ${id} AND stock > 0
+    `;
+    if (updated === 0) {
+      throw new BadRequestException('奖品库存不足');
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { api } from '../api';
@@ -18,6 +19,7 @@ vi.mock('../lib/date', () => ({
 
 describe('GoalsView', () => {
   beforeEach(() => {
+    setActivePinia(createPinia());
     vi.mocked(api.get).mockReset();
     vi.mocked(api.post).mockReset();
     vi.mocked(api.delete).mockReset();
