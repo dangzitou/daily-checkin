@@ -20,12 +20,6 @@ A lightweight daily habit tracking and task management app built with Vue 3 and 
 - **Responsive Design** - Works great on mobile (PWA ready)
 - **Self-hosted** - Full control over your data
 
-## 📸 Screenshots
-
-| Today | Calendar | Goals | Shop |
-|-------|----------|-------|------|
-| ![Today](docs/screenshots/today.png) | ![Calendar](docs/screenshots/calendar.png) | ![Goals](docs/screenshots/goals.png) | ![Shop](docs/screenshots/shop.png) |
-
 ## 🚀 Quick Start
 
 ### Prerequisites
