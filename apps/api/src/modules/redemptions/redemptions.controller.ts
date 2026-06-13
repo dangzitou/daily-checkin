@@ -13,18 +13,18 @@ import { RedemptionsService } from './redemptions.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 
-@Controller('api/redemptions')
+@Controller('redemptions')
 @UseGuards(AuthGuard)
 export class RedemptionsController {
   constructor(private redemptionsService: RedemptionsService) {}
 
   @Post()
-  async redeem(@Request() req, @Body('prizeId', ParseIntPipe) prizeId: number) {
+  async redeem(@Request() req: any, @Body('prizeId', ParseIntPipe) prizeId: number) {
     return this.redemptionsService.redeem(req.user.id, prizeId);
   }
 
   @Get('my')
-  async getMyRedemptions(@Request() req) {
+  async getMyRedemptions(@Request() req: any) {
     return this.redemptionsService.getUserRedemptions(req.user.id);
   }
 

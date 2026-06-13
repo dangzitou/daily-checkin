@@ -2,7 +2,7 @@ import { IsString, IsOptional, IsNumber, Min } from 'class-validator';
 
 export class CreatePrizeDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsString()
   @IsOptional()
@@ -14,7 +14,7 @@ export class CreatePrizeDto {
 
   @IsNumber()
   @Min(1)
-  pointsCost: number;
+  pointsCost!: number;
 
   @IsNumber()
   @Min(0)

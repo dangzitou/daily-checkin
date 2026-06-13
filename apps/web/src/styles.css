@@ -747,6 +747,389 @@ input:focus {
   color: var(--danger);
 }
 
+/* Points */
+.points-hero {
+  margin-bottom: 18px;
+}
+
+.points-balance {
+  display: grid;
+  gap: 4px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-soft) 0%, #fff 100%);
+  text-align: center;
+}
+
+.points-balance span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.points-balance strong {
+  font-size: 42px;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.points-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  background: var(--surface-warm);
+  color: var(--gold);
+  font-weight: 760;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+/* Point Logs */
+.log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.log-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 92%);
+}
+
+.log-info {
+  display: grid;
+  gap: 2px;
+}
+
+.log-reason {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.log-time {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.log-amount {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.log-amount.gain {
+  color: var(--primary);
+}
+
+.log-amount.cost {
+  color: var(--danger);
+}
+
+/* Prize Grid */
+.prize-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.prize-card {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 94%);
+  overflow: hidden;
+}
+
+.prize-image {
+  display: grid;
+  place-items: center;
+  min-height: 100px;
+  background: var(--surface);
+}
+
+.prize-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.prize-emoji {
+  font-size: 36px;
+}
+
+.prize-info {
+  padding: 12px 12px 12px 0;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+}
+
+.prize-info strong {
+  font-size: 16px;
+}
+
+.prize-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.prize-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.prize-cost {
+  color: var(--gold);
+  font-weight: 760;
+  font-size: 15px;
+}
+
+.prize-stock {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Redemption History */
+.redemption-history {
+  margin-top: 24px;
+}
+
+.redemption-history h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.redemption-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 90%);
+}
+
+.redemption-row + .redemption-row {
+  margin-top: 8px;
+}
+
+.redemption-row div {
+  display: grid;
+  gap: 2px;
+}
+
+.redemption-row strong {
+  font-size: 14px;
+}
+
+.redemption-time {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.status-pill.pending { border-color: #d8bf66; background: #fff8dc; color: #765711; }
+.status-pill.approved { border-color: #9bcfc6; background: #e5f5f1; color: var(--primary-strong); }
+.status-pill.delivered { border-color: #7fc7b9; background: #d8eee9; color: var(--primary); }
+.status-pill.rejected { border-color: #e8a0a0; background: #fdf0f0; color: var(--danger); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  animation: fadeInOut 3s ease;
+}
+
+.toast.success {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  border: 1px solid #9bcfc6;
+}
+
+.toast.error,
+.toast.warn {
+  background: #fdf0f0;
+  color: var(--danger);
+  border: 1px solid #e8a0a0;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Admin — reuse manage-list / manage-row from global */
+.admin-actions {
+  display: flex !important;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.manage-row.inactive {
+  opacity: 0.55;
+}
+
+.status-select {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--paper);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* Profile */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--primary) 0%, #1a8a7a 100%);
+  border-radius: 12px;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.profile-info h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+.profile-points {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.profile-menu {
+  display: grid;
+  gap: 2px;
+  background: var(--paper);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--paper);
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.profile-menu-item:active {
+  background: var(--bg);
+}
+
+.profile-menu-item span:first-of-type {
+  flex: 1;
+}
+
+.profile-menu-item .arrow {
+  color: var(--text-muted);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 40%);
+  padding: 18px;
+}
+
+.modal-content {
+  width: min(100%, 440px);
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: var(--paper);
+  padding: 24px;
+  box-shadow: 0 20px 40px rgb(0 0 0 / 20%);
+}
+
+.modal-content h2 {
+  margin: 0 0 18px;
+  font-size: 20px;
+}
+
+.modal-content form {
+  display: grid;
+  gap: 14px;
+}
+
+.modal-content input,
+.modal-content textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.modal-content input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(35 120 111 / 15%);
+  outline: none;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.form-actions button {
+  min-height: 42px;
+  font-size: 14px;
+}
+
 @media (max-width: 360px) {
   .page-shell {
     padding-right: 12px;

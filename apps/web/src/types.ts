@@ -2,6 +2,37 @@ export interface User {
   id: number;
   username: string;
   email: string | null;
+  isAdmin: boolean;
+  points: number;
+}
+
+export interface Prize {
+  id: number;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  pointsCost: number;
+  stock: number;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface PointLog {
+  id: number;
+  amount: number;
+  reason: string;
+  createdAt: string;
+}
+
+export interface Redemption {
+  id: number;
+  userId: number;
+  prizeId: number;
+  pointsCost: number;
+  status: string;
+  createdAt: string;
+  prize?: Prize;
+  user?: { id: number; username: string };
 }
 
 export interface Task {

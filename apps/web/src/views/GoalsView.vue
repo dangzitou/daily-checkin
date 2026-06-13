@@ -4,14 +4,18 @@ import { onMounted, reactive, ref } from 'vue';
 import { api } from '../api';
 import PageShell from '../components/PageShell.vue';
 import { formatLocalDate } from '../lib/date';
+import { useAuthStore } from '../stores/auth';
 import type { Goal } from '../types';
 
+const auth = useAuthStore();
 const goals = ref<Goal[]>([]);
 const loading = ref(true);
 const creating = ref(false);
 const busyGoalId = ref<number | null>(null);
 const error = ref('');
 const loadError = ref('');
+const toast = ref('');
+const toastType = ref<'success' | 'warn'>('success');
 const form = reactive({
   title: '',
   description: '',
@@ -19,6 +23,12 @@ const form = reactive({
   targetDate: '',
   targetCount: 30
 });
+
+function showToast(msg: string, type: 'success' | 'warn' = 'success') {
+  toast.value = msg;
+  toastType.value = type;
+  setTimeout(() => { toast.value = ''; }, 2500);
+}
 
 async function load() {
   loading.value = true;
@@ -61,10 +71,17 @@ async function toggleToday(goal: Goal) {
   loadError.value = '';
   try {
     if (goal.checkedToday) {
-      await api.delete(`/tasks/${goal.taskId}/checkins?date=${formatLocalDate()}`);
+      const res = await api.delete<{ ok: boolean; pointsDeducted: number }>(`/tasks/${goal.taskId}/checkins?date=${formatLocalDate()}`);
+      if (res.pointsDeducted > 0) {
+        showToast(`-${res.pointsDeducted} 积分`, 'warn');
+      }
     } else {
-      await api.post(`/tasks/${goal.taskId}/checkins?date=${formatLocalDate()}`);
+      const res = await api.post<{ pointsEarned: number }>(`/tasks/${goal.taskId}/checkins?date=${formatLocalDate()}`);
+      if (res.pointsEarned > 0) {
+        showToast(`+${res.pointsEarned} 积分 ✨`);
+      }
     }
+    await auth.loadMe();
     await load();
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : '操作失败';
@@ -92,6 +109,8 @@ onMounted(load);
 
 <template>
   <PageShell title="目标" eyebrow="倒计时">
+    <div v-if="toast" class="toast" :class="toastType">{{ toast }}</div>
+
     <form class="goal-form" @submit.prevent="createGoal">
       <label>
         <span>目标名</span>

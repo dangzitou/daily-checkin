@@ -15,7 +15,7 @@ import { CreatePrizeDto, UpdatePrizeDto } from './prizes.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 
-@Controller('api/prizes')
+@Controller('prizes')
 export class PrizesController {
   constructor(private prizesService: PrizesService) {}
 

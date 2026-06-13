@@ -7,8 +7,10 @@ import PageShell from '../components/PageShell.vue';
 import { buildMonthCells } from '../lib/calendar';
 import { formatLocalDate, formatMonth } from '../lib/date';
 import { summarizeToday } from '../lib/progress';
+import { useAuthStore } from '../stores/auth';
 import type { CalendarStatus, Task } from '../types';
 
+const auth = useAuthStore();
 const currentMonth = ref(formatMonth());
 const selectedDate = ref(formatLocalDate());
 const statusByDate = ref<Record<string, CalendarStatus>>({});
@@ -21,10 +23,18 @@ const form = reactive({
 });
 const creating = ref(false);
 const error = ref('');
+const toast = ref('');
+const toastType = ref<'success' | 'warn'>('success');
 const cells = computed(() => buildMonthCells(currentMonth.value, statusByDate.value));
 const residentTasks = computed(() => tasks.value.filter((task) => task.scope === 'resident'));
 const datedTasks = computed(() => tasks.value.filter((task) => task.scope === 'dated'));
 const progress = computed(() => summarizeToday(tasks.value));
+
+function showToast(msg: string, type: 'success' | 'warn' = 'success') {
+  toast.value = msg;
+  toastType.value = type;
+  setTimeout(() => { toast.value = ''; }, 2500);
+}
 
 function shiftMonth(delta: number) {
   const [year, month] = currentMonth.value.split('-').map(Number);
@@ -54,13 +64,23 @@ async function selectDate(date: string) {
 
 async function toggle(task: Task) {
   busyTaskId.value = task.id;
-  if (task.checked) {
-    await api.delete(`/tasks/${task.id}/checkins?date=${selectedDate.value}`);
-  } else {
-    await api.post(`/tasks/${task.id}/checkins?date=${selectedDate.value}`);
+  try {
+    if (task.checked) {
+      const res = await api.delete<{ ok: boolean; pointsDeducted: number }>(`/tasks/${task.id}/checkins?date=${selectedDate.value}`);
+      if (res.pointsDeducted > 0) {
+        showToast(`-${res.pointsDeducted} 积分`, 'warn');
+      }
+    } else {
+      const res = await api.post<{ pointsEarned: number }>(`/tasks/${task.id}/checkins?date=${selectedDate.value}`);
+      if (res.pointsEarned > 0) {
+        showToast(`+${res.pointsEarned} 积分 ✨`);
+      }
+    }
+    await auth.loadMe();
+    await Promise.all([load(), loadSelectedDate()]);
+  } finally {
+    busyTaskId.value = null;
   }
-  await Promise.all([load(), loadSelectedDate()]);
-  busyTaskId.value = null;
 }
 
 async function createDatedTask() {
@@ -98,6 +118,8 @@ onMounted(async () => {
         <button aria-label="下个月" @click="shiftMonth(1)"><ChevronRight :size="20" /></button>
       </div>
     </template>
+
+    <div v-if="toast" class="toast" :class="toastType">{{ toast }}</div>
 
     <section class="calendar-grid">
       <span v-for="day in ['一', '二', '三', '四', '五', '六', '日']" :key="day" class="weekday">{{ day }}</span>

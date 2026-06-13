@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { CalendarDays, CheckCircle2, ListTodo, Settings, Target } from 'lucide-vue-next';
+import { CalendarDays, CheckCircle2, ListTodo, User, Target, ShoppingBag } from 'lucide-vue-next';
+import { useAuthStore } from './stores/auth';
+
+const auth = useAuthStore();
 </script>
 
 <template>
@@ -13,17 +16,18 @@ import { CalendarDays, CheckCircle2, ListTodo, Settings, Target } from 'lucide-v
       <CalendarDays :size="22" />
       <span>日历</span>
     </RouterLink>
-    <RouterLink to="/goals" class="nav-item" aria-label="目标">
-      <Target :size="22" />
-      <span>目标</span>
+    <RouterLink :to="auth.user?.isAdmin ? '/admin/prizes' : '/goals'" class="nav-item" :aria-label="auth.user?.isAdmin ? '管理' : '目标'">
+      <Target v-if="!auth.user?.isAdmin" :size="22" />
+      <ShoppingBag v-else :size="22" />
+      <span>{{ auth.user?.isAdmin ? '管理' : '目标' }}</span>
     </RouterLink>
     <RouterLink to="/tasks" class="nav-item" aria-label="任务">
       <ListTodo :size="22" />
       <span>任务</span>
     </RouterLink>
-    <RouterLink to="/settings" class="nav-item" aria-label="设置">
-      <Settings :size="22" />
-      <span>设置</span>
+    <RouterLink to="/profile" class="nav-item" aria-label="我的">
+      <User :size="22" />
+      <span>我的</span>
     </RouterLink>
   </nav>
 </template>

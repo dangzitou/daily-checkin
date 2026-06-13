@@ -3,7 +3,7 @@ import { monthBounds, todayInShanghai } from '../../domain/dates';
 import { isTaskVisibleOnDate, validateIsoDate } from '../../domain/task-visibility';
 import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from '../tasks/tasks.service';
-import { PointsService } from '../points/points.service';
+import { PointsService, POINTS_PER_CHECKIN, STREAK_BONUS_THRESHOLD, STREAK_BONUS_POINTS } from '../points/points.service';
 
 @Injectable()
 export class CheckinsService {
@@ -41,9 +41,9 @@ export class CheckinsService {
 
     // Calculate streak and add points
     const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
-    await this.pointsService.addCheckinPoints(userId, streakDays);
+    const pointsEarned = await this.pointsService.addCheckinPoints(userId, streakDays);
 
-    return { ...checkin, pointsEarned: streakDays >= 7 ? 60 : 10 };
+    return { ...checkin, pointsEarned };
   }
 
   async uncheckToday(userId: number, taskId: number) {
@@ -54,10 +54,35 @@ export class CheckinsService {
   async uncheckOnDate(userId: number, taskId: number, dateInput: string) {
     const checkinDate = validateIsoDateForRequest(dateInput);
     await this.ensureVisibleTask(userId, taskId, checkinDate);
-    await this.prisma.checkin.deleteMany({
-      where: { userId, taskId, checkinDate }
+
+    // Find existing checkin
+    const existing = await this.prisma.checkin.findUnique({
+      where: { userId_taskId_checkinDate: { userId, taskId, checkinDate } },
     });
-    return { ok: true };
+
+    if (!existing) {
+      return { ok: true, pointsDeducted: 0 };
+    }
+
+    // Calculate what streak was at checkin time to determine points to deduct
+    const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
+    let pointsToDeduct = POINTS_PER_CHECKIN;
+    if (streakDays >= STREAK_BONUS_THRESHOLD) {
+      pointsToDeduct += STREAK_BONUS_POINTS;
+    }
+
+    // Deduct points and delete checkin
+    await this.pointsService.deductPoints(
+      userId,
+      pointsToDeduct,
+      `取消打卡扣回（连续${streakDays}天）`,
+    );
+
+    await this.prisma.checkin.delete({
+      where: { userId_taskId_checkinDate: { userId, taskId, checkinDate } },
+    });
+
+    return { ok: true, pointsDeducted: pointsToDeduct };
   }
 
   async calendar(userId: number, month: string) {

@@ -49,7 +49,7 @@ function proxyApi(request, response) {
 async function serveStatic(request, response) {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
   const rawPath = decodeURIComponent(url.pathname);
-  const safePath = normalize(rawPath).replace(/^(\.\.[/\\])+/, '');
+  const safePath = normalize(rawPath).replace(/^(\.\.[/\\])+/g, '');
   let filePath = join(root, safePath);
 
   if (!filePath.startsWith(root)) {
@@ -58,7 +58,16 @@ async function serveStatic(request, response) {
     return;
   }
 
+  const hasExt = extname(rawPath) !== '';
+
   if (!existsSync(filePath) || statSync(filePath).isDirectory()) {
+    // Only SPA fallback for paths without file extensions (routes like /shop, /calendar)
+    // Return 404 for missing static assets (old JS/CSS filenames from cached index.html)
+    if (hasExt) {
+      response.writeHead(404, { 'Content-Type': 'text/plain' });
+      response.end('Not found');
+      return;
+    }
     filePath = join(root, 'index.html');
   }
 
@@ -69,13 +78,22 @@ async function serveStatic(request, response) {
   }
 
   const type = contentTypes.get(extname(filePath)) ?? 'application/octet-stream';
-  response.writeHead(200, { 'Content-Type': type });
 
   if (filePath.endsWith('index.html')) {
+    response.writeHead(200, {
+      'Content-Type': type,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+    });
     response.end(await readFile(filePath));
     return;
   }
 
+  // Use no-cache for JS/CSS so browser always revalidates (fixes stale deploy issues)
+  const isAsset = /\.(js|css)$/.test(filePath);
+  response.writeHead(200, {
+    'Content-Type': type,
+    'Cache-Control': isAsset ? 'no-cache' : 'public, max-age=3600',
+  });
   createReadStream(filePath).pipe(response);
 }
 

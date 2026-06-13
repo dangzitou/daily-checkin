@@ -8,6 +8,8 @@ export interface PublicUser {
   id: number;
   username: string;
   email: string | null;
+  isAdmin: boolean;
+  points: number;
 }
 
 @Injectable()
@@ -38,7 +40,7 @@ export class AuthService {
         email,
         passwordHash: await argon2.hash(input.password)
       },
-      select: { id: true, username: true, email: true }
+      select: { id: true, username: true, email: true, isAdmin: true, points: true }
     });
 
     return user;
@@ -49,7 +51,7 @@ export class AuthService {
     const id = /^\d+$/.test(identifier) ? Number(identifier) : undefined;
     const user = await this.prisma.user.findFirst({
       where: id ? { id } : { username: identifier },
-      select: { id: true, username: true, email: true, passwordHash: true }
+      select: { id: true, username: true, email: true, isAdmin: true, points: true, passwordHash: true }
     });
 
     if (!user || !(await argon2.verify(user.passwordHash, input.password))) {
@@ -65,7 +67,7 @@ export class AuthService {
     );
 
     return {
-      user: { id: user.id, username: user.username, email: user.email },
+      user: { id: user.id, username: user.username, email: user.email, isAdmin: user.isAdmin, points: user.points },
       token
     };
   }
@@ -73,7 +75,7 @@ export class AuthService {
   async me(userId: number): Promise<PublicUser> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { id: true, username: true, email: true }
+      select: { id: true, username: true, email: true, isAdmin: true, points: true }
     });
     return user;
   }

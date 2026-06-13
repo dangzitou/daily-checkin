@@ -5,16 +5,26 @@ import TaskRow from '../components/TaskRow.vue';
 import { api } from '../api';
 import { formatLocalDate } from '../lib/date';
 import { summarizeToday } from '../lib/progress';
+import { useAuthStore } from '../stores/auth';
 import type { Goal, StatsSummary, Task } from '../types';
 
+const auth = useAuthStore();
 const today = formatLocalDate();
 const tasks = ref<Task[]>([]);
 const goals = ref<Goal[]>([]);
 const stats = ref<StatsSummary | null>(null);
 const busyTaskId = ref<number | null>(null);
 const loading = ref(true);
+const toast = ref('');
+const toastType = ref<'success' | 'warn'>('success');
 const todayProgress = computed(() => summarizeToday(tasks.value));
 const allDone = computed(() => todayProgress.value.total > 0 && todayProgress.value.completed === todayProgress.value.total);
+
+function showToast(msg: string, type: 'success' | 'warn' = 'success') {
+  toast.value = msg;
+  toastType.value = type;
+  setTimeout(() => { toast.value = ''; }, 2500);
+}
 
 async function load() {
   loading.value = true;
@@ -31,13 +41,23 @@ async function load() {
 
 async function toggle(task: Task) {
   busyTaskId.value = task.id;
-  if (task.checked) {
-    await api.delete(`/tasks/${task.id}/checkins?date=${today}`);
-  } else {
-    await api.post(`/tasks/${task.id}/checkins?date=${today}`);
+  try {
+    if (task.checked) {
+      const res = await api.delete<{ ok: boolean; pointsDeducted: number }>(`/tasks/${task.id}/checkins?date=${today}`);
+      if (res.pointsDeducted > 0) {
+        showToast(`-${res.pointsDeducted} 积分`, 'warn');
+      }
+    } else {
+      const res = await api.post<{ pointsEarned: number }>(`/tasks/${task.id}/checkins?date=${today}`);
+      if (res.pointsEarned > 0) {
+        showToast(`+${res.pointsEarned} 积分 ✨`);
+      }
+    }
+    await auth.loadMe();
+    await load();
+  } finally {
+    busyTaskId.value = null;
   }
-  await load();
-  busyTaskId.value = null;
 }
 
 onMounted(load);
@@ -45,6 +65,8 @@ onMounted(load);
 
 <template>
   <PageShell title="今日打卡" :eyebrow="stats?.today">
+    <div v-if="toast" class="toast" :class="toastType">{{ toast }}</div>
+
     <section class="summary-band">
       <div>
         <span>完成进度</span>
@@ -55,8 +77,8 @@ onMounted(load);
         <strong>{{ stats?.currentStreak ?? 0 }} 天</strong>
       </div>
       <div>
-        <span>最好</span>
-        <strong>{{ stats?.bestStreak ?? 0 }} 天</strong>
+        <span>积分</span>
+        <strong>{{ auth.user?.points ?? 0 }}</strong>
       </div>
     </section>
 
@@ -78,7 +100,7 @@ onMounted(load);
     </section>
 
     <section v-if="loading" class="empty-state">正在加载</section>
-    <section v-else-if="tasks.length === 0" class="empty-state">还没有任务，去“任务”里添加一个。</section>
+    <section v-else-if="tasks.length === 0" class="empty-state">还没有任务，去"任务"里添加一个。</section>
     <template v-else>
       <section v-if="allDone" class="done-note">今天完成啦</section>
       <section class="task-list">
