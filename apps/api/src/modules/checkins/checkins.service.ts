@@ -3,6 +3,7 @@ import { monthBounds, todayInShanghai } from '../../domain/dates';
 import { isTaskVisibleOnDate, validateIsoDate } from '../../domain/task-visibility';
 import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from '../tasks/tasks.service';
+import { PointsService } from '../points/points.service';
 
 @Injectable()
 export class CheckinsService {
@@ -10,7 +11,9 @@ export class CheckinsService {
     @Inject(PrismaService)
     private readonly prisma: PrismaService,
     @Inject(TasksService)
-    private readonly tasks: TasksService
+    private readonly tasks: TasksService,
+    @Inject(PointsService)
+    private readonly pointsService: PointsService,
   ) {}
 
   async checkToday(userId: number, taskId: number) {
@@ -22,11 +25,25 @@ export class CheckinsService {
     const checkinDate = validateIsoDateForRequest(dateInput);
     await this.ensureVisibleTask(userId, taskId, checkinDate);
 
-    return this.prisma.checkin.upsert({
+    // Check if already checked in
+    const existing = await this.prisma.checkin.findUnique({
       where: { userId_taskId_checkinDate: { userId, taskId, checkinDate } },
-      create: { userId, taskId, checkinDate },
-      update: {}
     });
+
+    if (existing) {
+      return existing; // Already checked in, no points
+    }
+
+    // Create checkin
+    const checkin = await this.prisma.checkin.create({
+      data: { userId, taskId, checkinDate },
+    });
+
+    // Calculate streak and add points
+    const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
+    await this.pointsService.addCheckinPoints(userId, streakDays);
+
+    return { ...checkin, pointsEarned: streakDays >= 7 ? 60 : 10 };
   }
 
   async uncheckToday(userId: number, taskId: number) {
@@ -129,6 +146,31 @@ export class CheckinsService {
         return totalTasks > 0 && taskIds.size >= totalTasks;
       })
       .map(([date]) => date);
+  }
+
+  private async calculateStreak(userId: number, taskId: number, currentDate: string): Promise<number> {
+    const checkins = await this.prisma.checkin.findMany({
+      where: { userId, taskId },
+      orderBy: { checkinDate: 'desc' },
+      select: { checkinDate: true },
+    });
+
+    let streak = 1;
+    let expectedDate = currentDate;
+
+    for (const checkin of checkins) {
+      if (checkin.checkinDate === expectedDate) {
+        // Calculate previous day
+        const date = new Date(expectedDate);
+        date.setDate(date.getDate() - 1);
+        expectedDate = date.toISOString().split('T')[0];
+        streak++;
+      } else if (checkin.checkinDate < expectedDate) {
+        break;
+      }
+    }
+
+    return streak - 1; // Subtract 1 because we counted the current day
   }
 
   private async ensureVisibleTask(userId: number, taskId: number, date: string) {

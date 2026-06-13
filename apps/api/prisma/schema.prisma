@@ -12,11 +12,15 @@ model User {
   username     String    @unique @db.VarChar(64)
   email        String?   @unique @db.VarChar(191)
   passwordHash String    @map("password_hash") @db.VarChar(191)
+  isAdmin      Boolean   @default(false) @map("is_admin")
+  points       Int       @default(0)
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   tasks        Task[]
   checkins     Checkin[]
   goals        Goal[]
+  pointLogs    PointLog[]
+  redemptions  Redemption[]
 
   @@map("users")
 }
@@ -74,4 +78,48 @@ model Checkin {
   @@unique([userId, taskId, checkinDate])
   @@index([userId, checkinDate])
   @@map("checkins")
+}
+
+model Prize {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(120)
+  description String?  @db.VarChar(500)
+  imageUrl    String?  @map("image_url") @db.VarChar(500)
+  pointsCost  Int      @map("points_cost")
+  stock       Int      @default(0)
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  redemptions Redemption[]
+
+  @@map("prizes")
+}
+
+model PointLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  amount    Int
+  reason    String   @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("point_logs")
+}
+
+model Redemption {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  prizeId   Int      @map("prize_id")
+  pointsCost Int     @map("points_cost")
+  status    String   @default("pending") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prize     Prize    @relation(fields: [prizeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([prizeId])
+  @@map("redemptions")
 }

@@ -10,6 +10,9 @@ import { RedisModule } from './redis/redis.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { StatsModule } from './stats/stats.module';
 import { TasksModule } from './tasks/tasks.module';
+import { PointsModule } from './points/points.module';
+import { PrizesModule } from './prizes/prizes.module';
+import { RedemptionsModule } from './redemptions/redemptions.module';
 
 @Module({
   imports: [
@@ -22,8 +25,11 @@ import { TasksModule } from './tasks/tasks.module';
     CheckinsModule,
     GoalsModule,
     StatsModule,
-    RemindersModule
+    RemindersModule,
+    PointsModule,
+    PrizesModule,
+    RedemptionsModule,
   ],
-  controllers: [AppController]
+  controllers: [AppController],
 })
 export class AppModule {}

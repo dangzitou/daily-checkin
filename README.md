@@ -13,15 +13,18 @@ A lightweight daily habit tracking and task management app built with Vue 3 and 
 - **Task Management** - Support both recurring and one-time tasks
 - **Calendar View** - Visual overview of your progress
 - **Goal Setting** - Set and track weekly/monthly goals
+- **Points System** - Earn points for daily checkins
+- **Prize Shop** - Redeem points for prizes (admin configurable)
+- **Admin Panel** - Manage prizes and view redemptions
 - **Email Reminders** - Optional SMTP notifications
 - **Responsive Design** - Works great on mobile (PWA ready)
 - **Self-hosted** - Full control over your data
 
 ## 📸 Screenshots
 
-| Today | Calendar | Goals |
-|-------|----------|-------|
-| ![Today](docs/screenshots/today.png) | ![Calendar](docs/screenshots/calendar.png) | ![Goals](docs/screenshots/goals.png) |
+| Today | Calendar | Goals | Shop |
+|-------|----------|-------|------|
+| ![Today](docs/screenshots/today.png) | ![Calendar](docs/screenshots/calendar.png) | ![Goals](docs/screenshots/goals.png) | ![Shop](docs/screenshots/shop.png) |
 
 ## 🚀 Quick Start
 
@@ -47,6 +50,9 @@ cp .env.example .env
 # Generate Prisma client
 pnpm --filter @daily-checkin/api prisma:generate
 
+# Run database migrations
+pnpm --filter @daily-checkin/api prisma:migrate
+
 # Run tests
 pnpm test
 
@@ -65,9 +71,37 @@ cp .env.example .env
 
 # Start with Docker Compose
 docker compose up -d --build
+
+# Set up admin user (after first user registers)
+pnpm --filter @daily-checkin/api ts-node scripts/set-admin.ts <username>
 ```
 
 Access the app at `http://localhost/`
+
+## 🎯 Points System
+
+### Earning Points
+
+| Action | Points |
+|--------|--------|
+| Daily checkin | +10 points |
+| 7-day streak bonus | +50 points |
+
+### Redeeming Points
+
+Users can redeem points for prizes configured by admins in the prize shop.
+
+## 👑 Admin Features
+
+Admins can:
+- Add, edit, and deactivate prizes
+- View all redemptions
+- Update redemption status (pending → completed → delivered)
+
+To make a user an admin:
+```bash
+pnpm --filter @daily-checkin/api ts-node scripts/set-admin.ts <username>
+```
 
 ## 📁 Project Structure
 
@@ -82,6 +116,9 @@ daily-checkin/
 │   │           ├── auth/      # Authentication
 │   │           ├── checkins/  # Checkin records
 │   │           ├── goals/     # Goal management
+│   │           ├── points/    # Points system
+│   │           ├── prizes/    # Prize management
+│   │           ├── redemptions/ # Redemption records
 │   │           ├── stats/     # Statistics
 │   │           └── tasks/     # Task management
 │   └── web/                   # Vue 3 frontend
@@ -116,14 +153,52 @@ daily-checkin/
 
 The API follows RESTful conventions:
 
+### Authentication
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/auth/register` | POST | Register new user |
 | `/api/auth/login` | POST | Login (username or ID) |
-| `/api/tasks` | GET/POST | List/Create tasks |
+
+### Tasks
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/tasks` | GET | List user tasks |
+| `/api/tasks` | POST | Create new task |
+| `/api/tasks/:id` | PUT | Update task |
+| `/api/tasks/:id` | DELETE | Delete task |
+
+### Checkins
+| Endpoint | Method | Description |
+|----------|--------|-------------|
 | `/api/checkins` | POST | Record a checkin |
-| `/api/goals` | GET/POST | List/Create goals |
-| `/api/stats` | GET | Get statistics |
+| `/api/checkins/calendar` | GET | Get calendar data |
+
+### Points
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/points/balance` | GET | Get points balance |
+| `/api/points/logs` | GET | Get points history |
+
+### Prizes (Public)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/prizes` | GET | List available prizes |
+| `/api/prizes/:id` | GET | Get prize details |
+
+### Prizes (Admin Only)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/prizes` | POST | Create prize |
+| `/api/prizes/:id` | PUT | Update prize |
+| `/api/prizes/:id` | DELETE | Deactivate prize |
+
+### Redemptions
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/redemptions` | POST | Redeem a prize |
+| `/api/redemptions/my` | GET | Get user's redemptions |
+| `/api/redemptions/all` | GET | Get all redemptions (admin) |
+| `/api/redemptions/:id/status` | PUT | Update status (admin) |
 
 ## 🔧 Configuration
 

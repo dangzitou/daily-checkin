@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
-import { TasksModule } from '../tasks/tasks.module';
-import { CheckinsController } from './checkins.controller';
 import { CheckinsService } from './checkins.service';
+import { CheckinsController } from './checkins.controller';
+import { PrismaModule } from '../prisma/prisma.module';
+import { TasksModule } from '../tasks/tasks.module';
+import { PointsModule } from '../points/points.module';
 
 @Module({
-  imports: [AuthModule, TasksModule],
+  imports: [PrismaModule, TasksModule, PointsModule],
   controllers: [CheckinsController],
   providers: [CheckinsService],
   exports: [CheckinsService]
