@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Inject, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
@@ -16,12 +17,14 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async register(@Body() dto: RegisterDto) {
     const user = await this.auth.register(dto);
     return { user };
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: Response) {
     const result = await this.auth.login(dto);
     response.cookie(this.cookieName, result.token, this.cookieOptions);

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Plus, Trash2 } from 'lucide-vue-next';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { api } from '../api';
 import PageShell from '../components/PageShell.vue';
 import type { Task } from '../types';
 
+const MAX_ACTIVE_TASKS = 20;
 const tasks = ref<Task[]>([]);
 const form = reactive({
   title: '',
@@ -13,6 +14,7 @@ const form = reactive({
 });
 const error = ref('');
 const busy = ref(false);
+const atLimit = computed(() => tasks.value.length >= MAX_ACTIVE_TASKS);
 
 async function load() {
   const result = await api.get<Task[]>('/tasks');
@@ -65,7 +67,8 @@ onMounted(load);
         <input v-model="form.reminderTime" type="time" />
       </label>
       <p v-if="error" class="error-text">{{ error }}</p>
-      <button class="primary-button" :disabled="busy" type="submit">
+      <p v-if="atLimit" class="error-text">最多创建 {{ MAX_ACTIVE_TASKS }} 个活跃任务，请先停用不需要的任务</p>
+      <button v-if="!atLimit" class="primary-button" :disabled="busy" type="submit">
         <Plus :size="18" />
         添加常驻任务
       </button>

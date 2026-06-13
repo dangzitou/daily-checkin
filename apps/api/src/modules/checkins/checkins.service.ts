@@ -32,13 +32,19 @@ export class CheckinsService {
     });
 
     if (existing) {
-      return existing; // Already checked in, no points
+      return { ...existing, pointsEarned: 0 };
     }
 
     // Create checkin
     const checkin = await this.prisma.checkin.create({
       data: { userId, taskId, checkinDate },
     });
+
+    // Only award points for today's checkin (prevent backdate farming)
+    const today = todayInShanghai();
+    if (checkinDate !== today) {
+      return { ...checkin, pointsEarned: 0 };
+    }
 
     // Calculate streak and add points
     const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
@@ -65,19 +71,22 @@ export class CheckinsService {
       return { ok: true, pointsDeducted: 0 };
     }
 
-    // Calculate what streak was at checkin time to determine points to deduct
-    const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
-    let pointsToDeduct = POINTS_PER_CHECKIN;
-    if (streakDays >= STREAK_BONUS_THRESHOLD) {
-      pointsToDeduct += STREAK_BONUS_POINTS;
-    }
+    // Only deduct points for today's uncheck (points were only awarded for today)
+    const today = todayInShanghai();
+    let pointsToDeduct = 0;
+    if (checkinDate === today) {
+      const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
+      pointsToDeduct = POINTS_PER_CHECKIN;
+      if (streakDays >= STREAK_BONUS_THRESHOLD) {
+        pointsToDeduct += STREAK_BONUS_POINTS;
+      }
 
-    // Deduct points and delete checkin
-    await this.pointsService.deductPoints(
-      userId,
-      pointsToDeduct,
-      `取消打卡扣回（连续${streakDays}天）`,
-    );
+      await this.pointsService.deductPoints(
+        userId,
+        pointsToDeduct,
+        `取消打卡扣回（连续${streakDays}天）`,
+      );
+    }
 
     await this.prisma.checkin.delete({
       where: { userId_taskId_checkinDate: { userId, taskId, checkinDate } },

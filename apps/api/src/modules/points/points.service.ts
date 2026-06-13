@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export const POINTS_PER_CHECKIN = 10;
 export const STREAK_BONUS_THRESHOLD = 7;
 export const STREAK_BONUS_POINTS = 50;
+export const DAILY_POINTS_CAP = 100;
 
 @Injectable()
 export class PointsService {
@@ -84,12 +85,39 @@ export class PointsService {
     });
   }
 
+  /**
+   * 获取用户今日已获取的积分总额。
+   */
+  async getTodayEarned(userId: number): Promise<number> {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const result = await this.prisma.pointLog.aggregate({
+      _sum: { amount: true },
+      where: {
+        userId,
+        amount: { gt: 0 },
+        createdAt: { gte: todayStart },
+      },
+    });
+
+    return result._sum.amount ?? 0;
+  }
+
   async addCheckinPoints(userId: number, streakDays: number): Promise<number> {
     let totalPoints = POINTS_PER_CHECKIN;
 
     if (streakDays >= STREAK_BONUS_THRESHOLD) {
       totalPoints += STREAK_BONUS_POINTS;
     }
+
+    // Enforce daily points cap
+    const todayEarned = await this.getTodayEarned(userId);
+    const remaining = DAILY_POINTS_CAP - todayEarned;
+    if (remaining <= 0) {
+      return 0; // Daily cap reached, no points awarded
+    }
+    totalPoints = Math.min(totalPoints, remaining);
 
     await this.addPoints(
       userId,

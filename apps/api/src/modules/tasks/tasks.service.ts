@@ -4,6 +4,8 @@ import { type TaskScope } from '../../domain/task-visibility';
 import { validateIsoDateForRequest } from '../../shared/iso-date';
 import { PrismaService } from '../prisma/prisma.service';
 
+const MAX_ACTIVE_TASKS = 20;
+
 @Injectable()
 export class TasksService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
@@ -51,6 +53,13 @@ export class TasksService {
   ) {
     const scope = input.scope ?? 'resident';
     const scheduledDate = normalizeScheduledDate(scope, input.scheduledDate);
+
+    // Limit active tasks per user to prevent points farming
+    const activeCount = await this.prisma.task.count({ where: { userId, isActive: true } });
+    if (activeCount >= MAX_ACTIVE_TASKS) {
+      throw new BadRequestException(`最多创建 ${MAX_ACTIVE_TASKS} 个活跃任务`);
+    }
+
     const nextOrder = await this.prisma.task.count({ where: { userId } });
     return this.prisma.task.create({
       data: {

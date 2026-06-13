@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { CheckinsModule } from './checkins/checkins.module';
@@ -17,6 +19,10 @@ import { RedemptionsModule } from './redemptions/redemptions.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,  // 1 minute window
+      limit: 60,   // 60 requests per minute (global default)
+    }]),
     ScheduleModule.forRoot(),
     PrismaModule,
     RedisModule,
@@ -31,5 +37,8 @@ import { RedemptionsModule } from './redemptions/redemptions.module';
     RedemptionsModule,
   ],
   controllers: [AppController],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}
