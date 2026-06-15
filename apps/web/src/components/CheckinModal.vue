@@ -7,6 +7,7 @@ import type { MoodEmoji, Task } from '../types';
 const props = defineProps<{
   task: Task;
   visible: boolean;
+  loading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -18,9 +19,9 @@ const selectedMood = ref<MoodEmoji | null>(null);
 const note = ref('');
 const photoFile = ref<File | null>(null);
 const photoPreview = ref<string | null>(null);
-const submitting = ref(false);
 
 const noteLength = computed(() => note.value.length);
+const isSubmitting = computed(() => props.loading ?? false);
 
 function onPhotoSelect(event: Event) {
   const input = event.target as HTMLInputElement;
@@ -49,17 +50,12 @@ function selectMood(emoji: MoodEmoji) {
   selectedMood.value = selectedMood.value === emoji ? null : emoji;
 }
 
-async function handleSubmit() {
-  submitting.value = true;
-  try {
-    emit('submit', {
-      photo: photoFile.value,
-      mood: selectedMood.value,
-      note: note.value.trim(),
-    });
-  } finally {
-    submitting.value = false;
-  }
+function handleSubmit() {
+  emit('submit', {
+    photo: photoFile.value,
+    mood: selectedMood.value,
+    note: note.value.trim(),
+  });
 }
 
 function handleBackdropClick(e: MouseEvent) {
@@ -137,10 +133,11 @@ function handleBackdropClick(e: MouseEvent) {
           <button class="btn-cancel" @click="$emit('close')">取消</button>
           <button
             class="btn-submit"
-            :disabled="submitting"
+            :disabled="isSubmitting"
             @click="handleSubmit"
           >
-            {{ submitting ? '提交中...' : '打卡！' }}
+            <span v-if="isSubmitting" class="spinner"></span>
+            {{ isSubmitting ? '打卡中...' : '打卡！' }}
           </button>
         </div>
       </div>
@@ -373,5 +370,21 @@ function handleBackdropClick(e: MouseEvent) {
 .btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

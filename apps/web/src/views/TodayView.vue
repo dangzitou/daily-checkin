@@ -24,6 +24,7 @@ const allDone = computed(() => todayProgress.value.total > 0 && todayProgress.va
 // Modal state
 const modalVisible = ref(false);
 const modalTask = ref<Task | null>(null);
+const checkinLoading = ref(false);
 
 function showToast(msg: string, type: 'success' | 'warn' = 'success') {
   toast.value = msg;
@@ -57,7 +58,7 @@ function closeModal() {
 async function handleCheckinSubmit(data: { photo: File | null; mood: MoodEmoji | null; note: string }) {
   if (!modalTask.value) return;
 
-  busyTaskId.value = modalTask.value.id;
+  checkinLoading.value = true;
   try {
     const formData = new FormData();
     if (data.photo) {
@@ -82,7 +83,7 @@ async function handleCheckinSubmit(data: { photo: File | null; mood: MoodEmoji |
     await auth.loadMe();
     await load();
   } finally {
-    busyTaskId.value = null;
+    checkinLoading.value = false;
   }
 }
 
@@ -160,6 +161,7 @@ onMounted(load);
       v-if="modalTask"
       :task="modalTask"
       :visible="modalVisible"
+      :loading="checkinLoading"
       @close="closeModal"
       @submit="handleCheckinSubmit"
     />
