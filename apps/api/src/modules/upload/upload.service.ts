@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { join } from 'path';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || join(__dirname, '..', '..', 'uploads');
+const UPLOAD_DIR = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
 
 @Injectable()
 export class UploadService {

@@ -6,7 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './modules/app.module';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || join(__dirname, '..', 'uploads');
+const UPLOAD_DIR = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

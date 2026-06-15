@@ -12,7 +12,7 @@ import { CheckinsService } from './checkins.service';
 import { UpdateCheckinDto, VALID_MOODS } from './dto/update-checkin.dto';
 import { UploadService } from '../upload/upload.service';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || join(__dirname, '..', '..', 'uploads');
+const UPLOAD_DIR = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
 
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
