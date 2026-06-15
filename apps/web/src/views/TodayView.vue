@@ -2,11 +2,12 @@
 import { computed, onMounted, ref } from 'vue';
 import PageShell from '../components/PageShell.vue';
 import TaskRow from '../components/TaskRow.vue';
+import CheckinModal from '../components/CheckinModal.vue';
 import { api } from '../api';
 import { formatLocalDate } from '../lib/date';
 import { summarizeToday } from '../lib/progress';
 import { useAuthStore } from '../stores/auth';
-import type { Goal, StatsSummary, Task } from '../types';
+import type { Goal, MoodEmoji, StatsSummary, Task } from '../types';
 
 const auth = useAuthStore();
 const today = formatLocalDate();
@@ -19,6 +20,10 @@ const toast = ref('');
 const toastType = ref<'success' | 'warn'>('success');
 const todayProgress = computed(() => summarizeToday(tasks.value));
 const allDone = computed(() => todayProgress.value.total > 0 && todayProgress.value.completed === todayProgress.value.total);
+
+// Modal state
+const modalVisible = ref(false);
+const modalTask = ref<Task | null>(null);
 
 function showToast(msg: string, type: 'success' | 'warn' = 'success') {
   toast.value = msg;
@@ -39,19 +44,54 @@ async function load() {
   loading.value = false;
 }
 
+function openCheckin(task: Task) {
+  modalTask.value = task;
+  modalVisible.value = true;
+}
+
+function closeModal() {
+  modalVisible.value = false;
+  modalTask.value = null;
+}
+
+async function handleCheckinSubmit(data: { photo: File | null; mood: MoodEmoji | null; note: string }) {
+  if (!modalTask.value) return;
+
+  busyTaskId.value = modalTask.value.id;
+  try {
+    const formData = new FormData();
+    if (data.photo) {
+      formData.append('photo', data.photo);
+    }
+    if (data.mood) {
+      formData.append('mood', data.mood);
+    }
+    if (data.note) {
+      formData.append('note', data.note);
+    }
+
+    const res = await api.upload<{ pointsEarned: number }>(
+      `/tasks/${modalTask.value.id}/checkins?date=${today}`,
+      formData
+    );
+
+    if (res.pointsEarned > 0) {
+      showToast(`+${res.pointsEarned} 积分 ✨`);
+    }
+    closeModal();
+    await auth.loadMe();
+    await load();
+  } finally {
+    busyTaskId.value = null;
+  }
+}
+
 async function toggle(task: Task) {
   busyTaskId.value = task.id;
   try {
-    if (task.checked) {
-      const res = await api.delete<{ ok: boolean; pointsDeducted: number }>(`/tasks/${task.id}/checkins?date=${today}`);
-      if (res.pointsDeducted > 0) {
-        showToast(`-${res.pointsDeducted} 积分`, 'warn');
-      }
-    } else {
-      const res = await api.post<{ pointsEarned: number }>(`/tasks/${task.id}/checkins?date=${today}`);
-      if (res.pointsEarned > 0) {
-        showToast(`+${res.pointsEarned} 积分 ✨`);
-      }
+    const res = await api.delete<{ ok: boolean; pointsDeducted: number }>(`/tasks/${task.id}/checkins?date=${today}`);
+    if (res.pointsDeducted > 0) {
+      showToast(`-${res.pointsDeducted} 积分`, 'warn');
     }
     await auth.loadMe();
     await load();
@@ -111,8 +151,17 @@ onMounted(load);
           :busy="busyTaskId === task.id"
           :show-scope="true"
           @toggle="toggle"
+          @open-checkin="openCheckin"
         />
       </section>
     </template>
+
+    <CheckinModal
+      v-if="modalTask"
+      :task="modalTask"
+      :visible="modalVisible"
+      @close="closeModal"
+      @submit="handleCheckinSubmit"
+    />
   </PageShell>
 </template>

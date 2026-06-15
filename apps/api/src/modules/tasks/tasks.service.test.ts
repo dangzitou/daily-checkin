@@ -14,7 +14,7 @@ describe('TasksService', () => {
             scheduledDate: null,
             reminderTime: '21:00',
             sortOrder: 0,
-            checkins: [{ id: 11, checkedAt: new Date('2026-06-12T10:00:00.000Z') }]
+            checkins: [{ id: 11, checkedAt: new Date('2026-06-12T10:00:00.000Z'), photoUrl: null, mood: null, note: null }]
           },
           {
             id: 2,
@@ -43,7 +43,7 @@ describe('TasksService', () => {
       include: {
         checkins: {
           where: { userId: 7, checkinDate: '2026-06-12' },
-          select: { id: true, checkedAt: true }
+          select: { id: true, checkedAt: true, photoUrl: true, mood: true, note: true }
         }
       }
     });
@@ -58,7 +58,11 @@ describe('TasksService', () => {
         sortOrder: 0,
         checked: true,
         checkedToday: true,
-        checkedAt: new Date('2026-06-12T10:00:00.000Z')
+        checkedAt: new Date('2026-06-12T10:00:00.000Z'),
+        checkinId: 11,
+        photoUrl: null,
+        mood: null,
+        note: null,
       },
       {
         id: 2,
@@ -70,7 +74,11 @@ describe('TasksService', () => {
         sortOrder: 1,
         checked: false,
         checkedToday: false,
-        checkedAt: null
+        checkedAt: null,
+        checkinId: null,
+        photoUrl: null,
+        mood: null,
+        note: null,
       }
     ]);
   });

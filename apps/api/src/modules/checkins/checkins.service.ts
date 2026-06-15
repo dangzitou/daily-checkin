@@ -5,6 +5,13 @@ import { validateIsoDateForRequest } from '../../shared/iso-date';
 import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from '../tasks/tasks.service';
 import { PointsService, POINTS_PER_CHECKIN, STREAK_BONUS_THRESHOLD, STREAK_BONUS_POINTS } from '../points/points.service';
+import { UploadService } from '../upload/upload.service';
+
+export interface CheckinOptions {
+  photoPath?: string;
+  mood?: string;
+  note?: string;
+}
 
 @Injectable()
 export class CheckinsService {
@@ -15,14 +22,16 @@ export class CheckinsService {
     private readonly tasks: TasksService,
     @Inject(PointsService)
     private readonly pointsService: PointsService,
+    @Inject(UploadService)
+    private readonly uploadService: UploadService,
   ) {}
 
-  async checkToday(userId: number, taskId: number) {
+  async checkToday(userId: number, taskId: number, options?: CheckinOptions) {
     const today = todayInShanghai();
-    return this.checkOnDate(userId, taskId, today);
+    return this.checkOnDate(userId, taskId, today, options);
   }
 
-  async checkOnDate(userId: number, taskId: number, dateInput: string) {
+  async checkOnDate(userId: number, taskId: number, dateInput: string, options?: CheckinOptions) {
     const checkinDate = validateIsoDateForRequest(dateInput);
     await this.ensureVisibleTask(userId, taskId, checkinDate);
 
@@ -35,9 +44,16 @@ export class CheckinsService {
       return { ...existing, pointsEarned: 0 };
     }
 
-    // Create checkin
+    // Create checkin with optional photo/mood/note
     const checkin = await this.prisma.checkin.create({
-      data: { userId, taskId, checkinDate },
+      data: {
+        userId,
+        taskId,
+        checkinDate,
+        photoUrl: options?.photoPath,
+        mood: options?.mood,
+        note: options?.note,
+      },
     });
 
     // Only award points for today's checkin (prevent backdate farming)
@@ -51,6 +67,43 @@ export class CheckinsService {
     const pointsEarned = await this.pointsService.addCheckinPoints(userId, streakDays);
 
     return { ...checkin, pointsEarned };
+  }
+
+  async updateCheckin(userId: number, checkinId: number, data: { mood?: string; note?: string; photoUrl?: string }) {
+    const checkin = await this.prisma.checkin.findFirst({
+      where: { id: checkinId, userId },
+    });
+
+    if (!checkin) {
+      throw new NotFoundException('打卡记录不存在');
+    }
+
+    return this.prisma.checkin.update({
+      where: { id: checkinId },
+      data,
+    });
+  }
+
+  async deletePhoto(userId: number, checkinId: number) {
+    const checkin = await this.prisma.checkin.findFirst({
+      where: { id: checkinId, userId },
+    });
+
+    if (!checkin) {
+      throw new NotFoundException('打卡记录不存在');
+    }
+
+    if (checkin.photoUrl) {
+      const filename = this.uploadService.extractFilenameFromUrl(checkin.photoUrl);
+      if (filename) {
+        this.uploadService.deletePhoto(filename);
+      }
+    }
+
+    return this.prisma.checkin.update({
+      where: { id: checkinId },
+      data: { photoUrl: null },
+    });
   }
 
   async uncheckToday(userId: number, taskId: number) {

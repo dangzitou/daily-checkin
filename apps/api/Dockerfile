@@ -22,5 +22,6 @@ ENV TZ=Asia/Shanghai
 WORKDIR /app
 COPY --from=build /prod/api ./
 COPY --from=build /app/apps/api/prisma ./prisma
+RUN mkdir -p /app/uploads/photos
 EXPOSE 3000
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

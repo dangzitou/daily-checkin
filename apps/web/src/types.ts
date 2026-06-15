@@ -35,6 +35,16 @@ export interface Redemption {
   user?: { id: number; username: string };
 }
 
+export const MOOD_OPTIONS = [
+  { emoji: '😊', label: '开心' },
+  { emoji: '😐', label: '一般' },
+  { emoji: '😔', label: '难过' },
+  { emoji: '😤', label: '烦躁' },
+  { emoji: '😴', label: '疲惫' },
+] as const;
+
+export type MoodEmoji = (typeof MOOD_OPTIONS)[number]['emoji'];
+
 export interface Task {
   id: number;
   title: string;
@@ -46,6 +56,10 @@ export interface Task {
   checked: boolean;
   checkedToday: boolean;
   checkedAt: string | null;
+  checkinId: number | null;
+  photoUrl: string | null;
+  mood: string | null;
+  note: string | null;
 }
 
 export interface StatsSummary {

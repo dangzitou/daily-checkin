@@ -72,6 +72,9 @@ model Checkin {
   taskId      Int      @map("task_id")
   checkinDate String   @map("checkin_date") @db.VarChar(10)
   checkedAt   DateTime @default(now()) @map("checked_at")
+  photoUrl    String?  @map("photo_url") @db.VarChar(500)
+  mood        String?  @db.VarChar(10)
+  note        String?  @db.VarChar(500)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 

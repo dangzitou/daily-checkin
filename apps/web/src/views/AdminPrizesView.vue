@@ -113,7 +113,7 @@ onMounted(load);
 <template>
   <PageShell title="奖品管理">
     <template #action>
-      <button v-if="activeTab === 'prizes'" class="primary-button" style="min-height:40px;font-size:14px;" @click="openCreate">
+      <button v-if="activeTab === 'prizes'" class="primary-button compact-btn" @click="openCreate">
         <Plus :size="18" />
         新增
       </button>

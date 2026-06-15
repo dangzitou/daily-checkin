@@ -36,7 +36,7 @@ async function logout() {
       <div class="profile-info">
         <h2>{{ auth.user?.username }}</h2>
         <p class="profile-points">
-          <Star :size="16" fill="#f5a623" stroke="#f5a623" />
+          <Star :size="16" class="points-star" />
           {{ loading ? '...' : balance }} 积分
         </p>
       </div>
@@ -61,7 +61,7 @@ async function logout() {
       </button>
     </section>
 
-    <button class="secondary-button full-width" style="margin-top: 24px;" @click="logout">
+    <button class="secondary-button full-width logout-btn" @click="logout">
       <LogOut :size="18" />
       退出登录
     </button>

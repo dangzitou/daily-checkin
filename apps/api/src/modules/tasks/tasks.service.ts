@@ -22,7 +22,7 @@ export class TasksService {
       include: {
         checkins: {
           where: { userId, checkinDate: date },
-          select: { id: true, checkedAt: true }
+          select: { id: true, checkedAt: true, photoUrl: true, mood: true, note: true }
         }
       }
     });
@@ -37,7 +37,11 @@ export class TasksService {
       sortOrder: task.sortOrder,
       checked: task.checkins.length > 0,
       checkedToday: task.checkins.length > 0,
-      checkedAt: task.checkins[0]?.checkedAt ?? null
+      checkedAt: task.checkins[0]?.checkedAt ?? null,
+      checkinId: task.checkins[0]?.id ?? null,
+      photoUrl: task.checkins[0]?.photoUrl ?? null,
+      mood: task.checkins[0]?.mood ?? null,
+      note: task.checkins[0]?.note ?? null,
     }));
   }
 

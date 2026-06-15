@@ -23,7 +23,13 @@ describe('CheckinsService', () => {
       addCheckinPoints: vi.fn(),
       deductCheckinPoints: vi.fn(),
     };
-    const service = new CheckinsService(prisma as never, {} as never, pointsService as never);
+    const uploadService = {
+      getUploadDir: vi.fn(),
+      getPhotoUrl: vi.fn(),
+      deletePhoto: vi.fn(),
+      extractFilenameFromUrl: vi.fn(),
+    };
+    const service = new CheckinsService(prisma as never, {} as never, pointsService as never, uploadService as never);
 
     await expect(service.calendar(7, '2026-06')).resolves.toEqual({
       '2026-06-12': {

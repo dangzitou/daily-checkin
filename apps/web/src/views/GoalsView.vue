@@ -145,7 +145,7 @@ onMounted(load);
     <section v-else-if="loadError" class="empty-state actionable-empty">
       <span>{{ loadError }}</span>
       <button class="secondary-button" type="button" @click="load">
-        <RefreshCw :size="17" />
+        <RefreshCw :size="18" />
         重新加载
       </button>
     </section>
@@ -166,7 +166,7 @@ onMounted(load);
               aria-label="删除目标"
               @click="deleteGoal(goal)"
             >
-              <Trash2 :size="16" />
+              <Trash2 :size="18" />
             </button>
           </div>
         </header>
@@ -185,8 +185,8 @@ onMounted(load);
             :aria-label="`${goal.checkedToday ? '取消今天打卡' : '完成今天打卡'} ${goal.title}`"
             @click="toggleToday(goal)"
           >
-            <Check v-if="goal.checkedToday" :size="18" />
-            <Circle v-else :size="18" />
+            <Check v-if="goal.checkedToday" :size="20" />
+            <Circle v-else :size="20" />
             {{ goal.checkedToday ? '已完成' : '打卡' }}
           </button>
         </div>

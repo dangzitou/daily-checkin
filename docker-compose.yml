@@ -46,7 +46,10 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-打卡提醒 <noreply@example.com>}
+      UPLOAD_DIR: /app/uploads
       TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - upload-data:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -66,3 +69,4 @@ services:
 volumes:
   mysql-data:
   redis-data:
+  upload-data:

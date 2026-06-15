@@ -81,7 +81,7 @@ onMounted(load);
           <span>{{ task.reminderTime ? `提醒 ${task.reminderTime}` : '不提醒' }}</span>
         </div>
         <button class="icon-button danger" :aria-label="`停用 ${task.title}`" @click="removeTask(task)">
-          <Trash2 :size="19" />
+          <Trash2 :size="18" />
         </button>
       </article>
     </section>
