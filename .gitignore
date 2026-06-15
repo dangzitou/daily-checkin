@@ -9,3 +9,4 @@ coverage/
 apps/api/prisma/generated/
 mysql-data/
 redis-data/
+uploads/
