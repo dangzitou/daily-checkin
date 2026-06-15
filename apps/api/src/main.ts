@@ -12,6 +12,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
   app.use(cookieParser());
+  // 增大 body 限制以支持大文件上传
+  app.useBodyParser('json', { limit: '10mb' });
+  app.useBodyParser('urlencoded', { limit: '10mb', extended: true });
   app.useStaticAssets(UPLOAD_DIR, { prefix: '/api/uploads' });
   app.useGlobalPipes(
     new ValidationPipe({
