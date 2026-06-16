@@ -1,30 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from './stores/auth';
-import AdminPrizesView from './views/AdminPrizesView.vue';
-import CalendarView from './views/CalendarView.vue';
-import FeedView from './views/FeedView.vue';
-import LoginView from './views/LoginView.vue';
-import ManageView from './views/ManageView.vue';
-import PointsView from './views/PointsView.vue';
-import ProfileView from './views/ProfileView.vue';
-import SettingsView from './views/SettingsView.vue';
-import ShopView from './views/ShopView.vue';
-import TodayView from './views/TodayView.vue';
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/login', component: LoginView, meta: { guest: true } },
-    { path: '/', component: TodayView },
-    { path: '/calendar', component: CalendarView },
-    { path: '/tasks', component: ManageView },
+    { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true } },
+    { path: '/', component: () => import('./views/TodayView.vue') },
+    { path: '/calendar', component: () => import('./views/CalendarView.vue') },
+    { path: '/tasks', component: () => import('./views/ManageView.vue') },
     { path: '/goals', redirect: '/tasks' },
-    { path: '/feed', component: FeedView },
-    { path: '/settings', component: SettingsView },
-    { path: '/shop', component: ShopView },
-    { path: '/points', component: PointsView },
-    { path: '/profile', component: ProfileView },
-    { path: '/admin/prizes', component: AdminPrizesView, meta: { admin: true } },
+    { path: '/feed', component: () => import('./views/FeedView.vue') },
+    { path: '/settings', component: () => import('./views/SettingsView.vue') },
+    { path: '/shop', component: () => import('./views/ShopView.vue') },
+    { path: '/points', component: () => import('./views/PointsView.vue') },
+    { path: '/profile', component: () => import('./views/ProfileView.vue') },
+    { path: '/admin/prizes', component: () => import('./views/AdminPrizesView.vue'), meta: { admin: true } },
   ],
 });
 

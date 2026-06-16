@@ -1,40 +1,33 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next';
 import { computed, onMounted, reactive, ref } from 'vue';
-import { api } from '../api';
+import { api, ApiError } from '../api';
 import TaskRow from '../components/TaskRow.vue';
 import PageShell from '../components/PageShell.vue';
 import { buildMonthCells } from '../lib/calendar';
 import { formatLocalDate, formatMonth } from '../lib/date';
 import { summarizeToday } from '../lib/progress';
 import { useAuthStore } from '../stores/auth';
+import { useToast } from '../composables/useToast';
 import type { CalendarStatus, Task } from '../types';
 
 const auth = useAuthStore();
+const { show: showToast } = useToast();
 const currentMonth = ref(formatMonth());
 const selectedDate = ref(formatLocalDate());
 const statusByDate = ref<Record<string, CalendarStatus>>({});
 const tasks = ref<Task[]>([]);
 const busyTaskId = ref<number | null>(null);
 const loadingTasks = ref(false);
-const form = reactive({
-  title: '',
-  description: ''
-});
+const loadingCalendar = ref(false);
+const calendarError = ref('');
+const form = reactive({ title: '', description: '' });
 const creating = ref(false);
 const error = ref('');
-const toast = ref('');
-const toastType = ref<'success' | 'warn'>('success');
 const cells = computed(() => buildMonthCells(currentMonth.value, statusByDate.value));
-const residentTasks = computed(() => tasks.value.filter((task) => task.scope === 'resident'));
-const datedTasks = computed(() => tasks.value.filter((task) => task.scope === 'dated'));
+const residentTasks = computed(() => tasks.value.filter((t) => t.scope === 'resident'));
+const datedTasks = computed(() => tasks.value.filter((t) => t.scope === 'dated'));
 const progress = computed(() => summarizeToday(tasks.value));
-
-function showToast(msg: string, type: 'success' | 'warn' = 'success') {
-  toast.value = msg;
-  toastType.value = type;
-  setTimeout(() => { toast.value = ''; }, 2500);
-}
 
 function shiftMonth(delta: number) {
   const [year, month] = currentMonth.value.split('-').map(Number);
@@ -44,13 +37,26 @@ function shiftMonth(delta: number) {
 }
 
 async function load() {
-  statusByDate.value = await api.get<Record<string, CalendarStatus>>(`/checkins/calendar?month=${currentMonth.value}`);
+  loadingCalendar.value = true;
+  calendarError.value = '';
+  try {
+    statusByDate.value = await api.get<Record<string, CalendarStatus>>(`/checkins/calendar?month=${currentMonth.value}`);
+  } catch (err) {
+    calendarError.value = err instanceof ApiError ? err.message : '加载日历失败';
+  } finally {
+    loadingCalendar.value = false;
+  }
 }
 
 async function loadSelectedDate() {
   loadingTasks.value = true;
-  tasks.value = await api.get<Task[]>(`/tasks?date=${selectedDate.value}`);
-  loadingTasks.value = false;
+  try {
+    tasks.value = await api.get<Task[]>(`/tasks?date=${selectedDate.value}`);
+  } catch (err) {
+    showToast(err instanceof ApiError ? err.message : '加载任务失败', 'error');
+  } finally {
+    loadingTasks.value = false;
+  }
 }
 
 async function selectDate(date: string) {
@@ -67,17 +73,15 @@ async function toggle(task: Task) {
   try {
     if (task.checked) {
       const res = await api.delete<{ ok: boolean; pointsDeducted: number }>(`/tasks/${task.id}/checkins?date=${selectedDate.value}`);
-      if (res.pointsDeducted > 0) {
-        showToast(`-${res.pointsDeducted} 积分`, 'warn');
-      }
+      if (res.pointsDeducted > 0) showToast(`-${res.pointsDeducted} 积分`, 'warn');
     } else {
       const res = await api.post<{ pointsEarned: number }>(`/tasks/${task.id}/checkins?date=${selectedDate.value}`);
-      if (res.pointsEarned > 0) {
-        showToast(`+${res.pointsEarned} 积分 ✨`);
-      }
+      if (res.pointsEarned > 0) showToast(`+${res.pointsEarned} 积分 ✨`);
     }
     await auth.loadMe();
     await Promise.all([load(), loadSelectedDate()]);
+  } catch (err) {
+    showToast(err instanceof ApiError ? err.message : '操作失败', 'error');
   } finally {
     busyTaskId.value = null;
   }
@@ -92,7 +96,7 @@ async function createDatedTask() {
       title: form.title,
       description: form.description || undefined,
       scope: 'dated',
-      scheduledDate: selectedDate.value
+      scheduledDate: selectedDate.value,
     });
     form.title = '';
     form.description = '';
@@ -105,8 +109,7 @@ async function createDatedTask() {
 }
 
 onMounted(async () => {
-  await load();
-  await loadSelectedDate();
+  await Promise.all([load(), loadSelectedDate()]);
 });
 </script>
 
@@ -119,9 +122,12 @@ onMounted(async () => {
       </div>
     </template>
 
-    <div v-if="toast" class="toast" :class="toastType">{{ toast }}</div>
-
-    <section class="calendar-grid">
+    <!-- Calendar grid -->
+    <section v-if="calendarError" class="empty-state actionable-empty">
+      <span>{{ calendarError }}</span>
+      <button class="secondary-button" type="button" @click="load">重新加载</button>
+    </section>
+    <section v-else class="calendar-grid">
       <span v-for="day in ['一', '二', '三', '四', '五', '六', '日']" :key="day" class="weekday">{{ day }}</span>
       <button
         v-for="cell in cells"
@@ -131,7 +137,7 @@ onMounted(async () => {
           muted: !cell.inMonth,
           selected: cell.date === selectedDate,
           complete: cell.complete,
-          partial: !cell.complete && (cell.completionRate ?? 0) > 0
+          partial: !cell.complete && (cell.completionRate ?? 0) > 0,
         }"
         @click="selectDate(cell.date)"
       >
@@ -165,7 +171,9 @@ onMounted(async () => {
         </button>
       </form>
 
-      <section v-if="loadingTasks" class="empty-state">正在加载</section>
+      <section v-if="loadingTasks" class="task-list">
+        <div v-for="i in 2" :key="i" class="skeleton-row" />
+      </section>
       <template v-else>
         <section v-if="datedTasks.length" class="task-section">
           <h3>这一天</h3>
@@ -173,13 +181,7 @@ onMounted(async () => {
         </section>
         <section v-if="residentTasks.length" class="task-section">
           <h3>常驻</h3>
-          <TaskRow
-            v-for="task in residentTasks"
-            :key="task.id"
-            :task="task"
-            :busy="busyTaskId === task.id"
-            @toggle="toggle"
-          />
+          <TaskRow v-for="task in residentTasks" :key="task.id" :task="task" :busy="busyTaskId === task.id" @toggle="toggle" />
         </section>
         <section v-if="tasks.length === 0" class="empty-state">这一天还没有任务。</section>
       </template>

@@ -86,7 +86,7 @@ export class PointsService {
   }
 
   /**
-   * 获取用户今日已获取的积分总额。
+   * 获取用户今日已获取的积分总额（使用上海时区，依赖 TZ=Asia/Shanghai 环境变量）。
    */
   async getTodayEarned(userId: number): Promise<number> {
     const todayStart = new Date();

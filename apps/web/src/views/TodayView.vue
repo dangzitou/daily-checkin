@@ -3,21 +3,22 @@ import { computed, onMounted, ref } from 'vue';
 import PageShell from '../components/PageShell.vue';
 import TaskRow from '../components/TaskRow.vue';
 import CheckinModal from '../components/CheckinModal.vue';
-import { api } from '../api';
+import { api, ApiError } from '../api';
 import { formatLocalDate } from '../lib/date';
 import { summarizeToday } from '../lib/progress';
 import { useAuthStore } from '../stores/auth';
+import { useToast } from '../composables/useToast';
 import type { Goal, MoodEmoji, StatsSummary, Task } from '../types';
 
 const auth = useAuthStore();
+const { show: showToast } = useToast();
 const today = formatLocalDate();
 const tasks = ref<Task[]>([]);
 const goals = ref<Goal[]>([]);
 const stats = ref<StatsSummary | null>(null);
 const busyTaskId = ref<number | null>(null);
 const loading = ref(true);
-const toast = ref('');
-const toastType = ref<'success' | 'warn'>('success');
+const loadError = ref('');
 const todayProgress = computed(() => summarizeToday(tasks.value));
 const allDone = computed(() => todayProgress.value.total > 0 && todayProgress.value.completed === todayProgress.value.total);
 
@@ -26,23 +27,23 @@ const modalVisible = ref(false);
 const modalTask = ref<Task | null>(null);
 const checkinLoading = ref(false);
 
-function showToast(msg: string, type: 'success' | 'warn' = 'success') {
-  toast.value = msg;
-  toastType.value = type;
-  setTimeout(() => { toast.value = ''; }, 2500);
-}
-
 async function load() {
   loading.value = true;
-  const [taskResult, statsResult, goalResult] = await Promise.all([
-    api.get<Task[]>(`/tasks?date=${today}`),
-    api.get<StatsSummary>('/stats/summary'),
-    api.get<Goal[]>('/goals')
-  ]);
-  tasks.value = taskResult;
-  stats.value = statsResult;
-  goals.value = goalResult;
-  loading.value = false;
+  loadError.value = '';
+  try {
+    const [taskResult, statsResult, goalResult] = await Promise.all([
+      api.get<Task[]>(`/tasks?date=${today}`),
+      api.get<StatsSummary>('/stats/summary'),
+      api.get<Goal[]>('/goals'),
+    ]);
+    tasks.value = taskResult;
+    stats.value = statsResult;
+    goals.value = goalResult;
+  } catch (err) {
+    loadError.value = err instanceof ApiError ? err.message : '加载失败，请检查网络';
+  } finally {
+    loading.value = false;
+  }
 }
 
 function openCheckin(task: Task) {
@@ -61,19 +62,13 @@ async function handleCheckinSubmit(data: { photo: File | null; mood: MoodEmoji |
   checkinLoading.value = true;
   try {
     const formData = new FormData();
-    if (data.photo) {
-      formData.append('photo', data.photo);
-    }
-    if (data.mood) {
-      formData.append('mood', data.mood);
-    }
-    if (data.note) {
-      formData.append('note', data.note);
-    }
+    if (data.photo) formData.append('photo', data.photo);
+    if (data.mood) formData.append('mood', data.mood);
+    if (data.note) formData.append('note', data.note);
 
     const res = await api.upload<{ pointsEarned: number }>(
       `/tasks/${modalTask.value.id}/checkins?date=${today}`,
-      formData
+      formData,
     );
 
     if (res.pointsEarned > 0) {
@@ -82,6 +77,8 @@ async function handleCheckinSubmit(data: { photo: File | null; mood: MoodEmoji |
     closeModal();
     await auth.loadMe();
     await load();
+  } catch (err) {
+    showToast(err instanceof ApiError ? err.message : '打卡失败', 'error');
   } finally {
     checkinLoading.value = false;
   }
@@ -96,6 +93,8 @@ async function toggle(task: Task) {
     }
     await auth.loadMe();
     await load();
+  } catch (err) {
+    showToast(err instanceof ApiError ? err.message : '操作失败', 'error');
   } finally {
     busyTaskId.value = null;
   }
@@ -106,8 +105,6 @@ onMounted(load);
 
 <template>
   <PageShell title="今日打卡" :eyebrow="stats?.today">
-    <div v-if="toast" class="toast" :class="toastType">{{ toast }}</div>
-
     <section class="summary-band">
       <div>
         <span>完成进度</span>
@@ -140,10 +137,25 @@ onMounted(load);
       </article>
     </section>
 
-    <section v-if="loading" class="empty-state">正在加载</section>
-    <section v-else-if="tasks.length === 0" class="empty-state">还没有任务，去"任务"里添加一个。</section>
+    <!-- Loading skeleton -->
+    <section v-if="loading" class="task-list">
+      <div v-for="i in 3" :key="i" class="skeleton-row" />
+    </section>
+
+    <!-- Error state -->
+    <section v-else-if="loadError" class="empty-state actionable-empty">
+      <span>{{ loadError }}</span>
+      <button class="secondary-button" type="button" @click="load">重新加载</button>
+    </section>
+
+    <!-- Empty state -->
+    <section v-else-if="tasks.length === 0" class="empty-state actionable-empty">
+      <span>还没有任务</span>
+      <RouterLink to="/tasks" class="secondary-button">去添加第一个任务 →</RouterLink>
+    </section>
+
     <template v-else>
-      <section v-if="allDone" class="done-note">今天完成啦</section>
+      <section v-if="allDone" class="done-note">🎉 今天完成啦</section>
       <section class="task-list">
         <TaskRow
           v-for="task in tasks"

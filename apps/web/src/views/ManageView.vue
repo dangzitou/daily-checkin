@@ -6,9 +6,11 @@ import { api } from '../api';
 import PageShell from '../components/PageShell.vue';
 import { formatLocalDate } from '../lib/date';
 import { useAuthStore } from '../stores/auth';
+import { useToast } from '../composables/useToast';
 import type { Goal, Task } from '../types';
 
 const auth = useAuthStore();
+const { show: showToast } = useToast();
 const route = useRoute();
 const router = useRouter();
 const activeTab = ref<'tasks' | 'goals'>('tasks');
@@ -55,6 +57,7 @@ async function createTask() {
 }
 
 async function removeTask(task: Task) {
+  if (!confirm(`确定停用「${task.title}」吗？`)) return;
   await api.delete(`/tasks/${task.id}`);
   await loadTasks();
 }
@@ -66,8 +69,6 @@ const goalCreating = ref(false);
 const busyGoalId = ref<number | null>(null);
 const goalError = ref('');
 const goalLoadError = ref('');
-const toast = ref('');
-const toastType = ref<'success' | 'warn'>('success');
 const goalForm = reactive({
   title: '',
   description: '',
@@ -75,12 +76,6 @@ const goalForm = reactive({
   targetDate: '',
   targetCount: 30,
 });
-
-function showToast(msg: string, type: 'success' | 'warn' = 'success') {
-  toast.value = msg;
-  toastType.value = type;
-  setTimeout(() => { toast.value = ''; }, 2500);
-}
 
 async function loadGoals() {
   goalLoading.value = true;
@@ -185,9 +180,6 @@ const eyebrow = computed(() => activeTab.value === 'tasks' ? '每天出现' : '�
         目标
       </button>
     </div>
-
-    <!-- Toast -->
-    <div v-if="toast" class="toast" :class="toastType">{{ toast }}</div>
 
     <!-- ===== Tasks Tab ===== -->
     <div v-if="activeTab === 'tasks'">

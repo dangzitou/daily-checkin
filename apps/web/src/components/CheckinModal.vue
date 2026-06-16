@@ -19,6 +19,7 @@ const selectedMood = ref<MoodEmoji | null>(null);
 const note = ref('');
 const photoFile = ref<File | null>(null);
 const photoPreview = ref<string | null>(null);
+const photoError = ref('');
 
 const noteLength = computed(() => note.value.length);
 const isSubmitting = computed(() => props.loading ?? false);
@@ -29,10 +30,12 @@ function onPhotoSelect(event: Event) {
   if (!file) return;
 
   if (file.size > 5 * 1024 * 1024) {
-    alert('照片不能超过 5MB');
+    photoError.value = '照片不能超过 5MB';
+    setTimeout(() => { photoError.value = ''; }, 3000);
     return;
   }
 
+  photoError.value = '';
   photoFile.value = file;
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -79,6 +82,7 @@ function handleBackdropClick(e: MouseEvent) {
         <div class="modal-body">
           <!-- Photo section -->
           <div class="photo-section">
+            <p v-if="photoError" class="photo-error">{{ photoError }}</p>
             <div v-if="photoPreview" class="photo-preview">
               <img :src="photoPreview" alt="照片预览" />
               <button class="photo-remove" @click="removePhoto">
@@ -228,6 +232,17 @@ function handleBackdropClick(e: MouseEvent) {
 .photo-upload:hover {
   border-color: var(--primary);
   color: var(--primary);
+}
+
+.photo-error {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fdf0f0;
+  color: var(--danger, #b42318);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .photo-preview {

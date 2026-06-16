@@ -434,11 +434,11 @@ input:focus {
   font-weight: 700;
 }
 
-.nav-item.router-link-active {
+.nav-item.active {
   color: var(--primary);
 }
 
-.nav-item.router-link-active svg {
+.nav-item.active svg {
   stroke-width: 2.4;
 }
 
@@ -1496,12 +1496,17 @@ input:focus {
   color: var(--muted);
   cursor: pointer;
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
 
-.feed-comment:hover .feed-comment-delete {
-  opacity: 1;
+/* On hover-capable devices, hide until hover */
+@media (hover: hover) {
+  .feed-comment-delete {
+    opacity: 0;
+  }
+  .feed-comment:hover .feed-comment-delete {
+    opacity: 1;
+  }
 }
 
 .feed-comment-delete:hover {
@@ -1559,4 +1564,49 @@ input:focus {
 .feed-load-more {
   text-align: center;
   padding: 8px 0;
+}
+
+/* Skeleton loading */
+.skeleton-row {
+  height: 68px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  margin-bottom: 6px;
+}
+
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w80 { width: 80%; }
+
+.skeleton-photo {
+  height: 180px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
