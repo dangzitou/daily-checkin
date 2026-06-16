@@ -35,16 +35,13 @@ async function submit() {
 <template>
   <main class="login-page">
     <section class="login-panel">
-      <!-- Hero visual -->
       <div class="login-hero">
         <div class="login-logo">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <circle cx="24" cy="24" r="23" fill="#1f7268" opacity="0.1"/>
-            <circle cx="24" cy="24" r="16" fill="#1f7268" opacity="0.15"/>
-            <path d="M16 24.5l5 5 11-12" stroke="#1f7268" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
+            <path d="M14 25l7 7 13-14" stroke="#1d6b61" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <p class="login-brand">每日打卡</p>
+        <h1 class="login-brand">每日打卡</h1>
         <p class="login-tagline">记录每天完成的小事</p>
       </div>
 
@@ -56,12 +53,12 @@ async function submit() {
       <form class="form" @submit.prevent="submit">
         <label v-if="mode === 'login'">
           <span>用户名或 ID</span>
-          <input v-model="identifier" autocomplete="username" required />
+          <input v-model="identifier" autocomplete="username" required placeholder="输入用户名" />
         </label>
         <template v-else>
           <label>
             <span>用户名</span>
-            <input v-model="username" autocomplete="username" minlength="2" required />
+            <input v-model="username" autocomplete="username" minlength="2" required placeholder="给自己取个名字" />
           </label>
         </template>
         <label>
@@ -72,6 +69,7 @@ async function submit() {
             :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
             minlength="6"
             required
+            placeholder="至少 6 位"
           />
         </label>
         <p v-if="error" class="error-text">{{ error }}</p>

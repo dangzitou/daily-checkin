@@ -14,7 +14,7 @@ async function logout() {
 </script>
 
 <template>
-  <PageShell title="设置" eyebrow="账号">
+  <PageShell title="设置" eyebrow="账号" show-back>
     <section class="settings-list">
       <div class="settings-row">
         <span>用户名</span>

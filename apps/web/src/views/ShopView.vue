@@ -65,7 +65,7 @@ onMounted(load);
 </script>
 
 <template>
-  <PageShell title="积分商城">
+  <PageShell title="积分商城" show-back>
     <template #action>
       <RouterLink to="/points" class="points-badge" aria-label="我的积分">
         ⭐ {{ myPoints }}

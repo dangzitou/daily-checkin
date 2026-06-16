@@ -28,7 +28,7 @@ onMounted(load);
 </script>
 
 <template>
-  <PageShell title="我的积分">
+  <PageShell title="积分明细" show-back>
     <template #action>
       <RouterLink to="/shop" class="secondary-button" style="min-height:40px;font-size:14px;">
         去兑换
