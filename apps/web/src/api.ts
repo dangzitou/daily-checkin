@@ -8,13 +8,13 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const isFormData = options.body instanceof FormData;
   const response = await fetch(`/api${path}`, {
     ...options,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {})
-    }
+    headers: isFormData
+      ? (options.headers ?? {})
+      : { 'Content-Type': 'application/json', ...(options.headers ?? {}) }
   });
 
   if (!response.ok) {
@@ -35,8 +35,7 @@ export const api = {
   upload: <T>(path: string, formData: FormData) =>
     request<T>(path, {
       method: 'POST',
-      body: formData,
-      headers: {} // Let browser set Content-Type with boundary
+      body: formData
     }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, {
