@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDays, CheckCircle2, ListTodo, User, Target, ShoppingBag } from 'lucide-vue-next';
+import { CalendarDays, CheckCircle2, ListTodo, Megaphone, User, ShoppingBag } from 'lucide-vue-next';
 import { useAuthStore } from './stores/auth';
 
 const auth = useAuthStore();
@@ -16,14 +16,14 @@ const auth = useAuthStore();
       <CalendarDays :size="22" />
       <span>日历</span>
     </RouterLink>
-    <RouterLink :to="auth.user?.isAdmin ? '/admin/prizes' : '/goals'" class="nav-item" :aria-label="auth.user?.isAdmin ? '管理' : '目标'">
-      <Target v-if="!auth.user?.isAdmin" :size="22" />
-      <ShoppingBag v-else :size="22" />
-      <span>{{ auth.user?.isAdmin ? '管理' : '目标' }}</span>
+    <RouterLink :to="auth.user?.isAdmin ? '/admin/prizes' : '/tasks'" class="nav-item" :aria-label="auth.user?.isAdmin ? '管理' : '任务'">
+      <ShoppingBag v-if="auth.user?.isAdmin" :size="22" />
+      <ListTodo v-else :size="22" />
+      <span>{{ auth.user?.isAdmin ? '管理' : '任务' }}</span>
     </RouterLink>
-    <RouterLink to="/tasks" class="nav-item" aria-label="任务">
-      <ListTodo :size="22" />
-      <span>任务</span>
+    <RouterLink to="/feed" class="nav-item" aria-label="广场">
+      <Megaphone :size="22" />
+      <span>广场</span>
     </RouterLink>
     <RouterLink to="/profile" class="nav-item" aria-label="我的">
       <User :size="22" />

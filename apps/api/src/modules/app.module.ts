@@ -15,6 +15,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { PointsModule } from './points/points.module';
 import { PrizesModule } from './prizes/prizes.module';
 import { RedemptionsModule } from './redemptions/redemptions.module';
+import { FeedModule } from './feed/feed.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { RedemptionsModule } from './redemptions/redemptions.module';
     PointsModule,
     PrizesModule,
     RedemptionsModule,
+    FeedModule,
   ],
   controllers: [AppController],
   providers: [

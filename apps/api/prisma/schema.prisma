@@ -21,6 +21,8 @@ model User {
   goals        Goal[]
   pointLogs    PointLog[]
   redemptions  Redemption[]
+  likes        Like[]
+  comments     Comment[]
 
   @@map("users")
 }
@@ -77,6 +79,8 @@ model Checkin {
   note        String?  @db.VarChar(500)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  likes       Like[]
+  comments    Comment[]
 
   @@unique([userId, taskId, checkinDate])
   @@index([userId, checkinDate])
@@ -125,4 +129,31 @@ model Redemption {
   @@index([userId])
   @@index([prizeId])
   @@map("redemptions")
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  checkinId Int      @map("checkin_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkin   Checkin  @relation(fields: [checkinId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, checkinId])
+  @@index([checkinId])
+  @@map("likes")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  checkinId Int      @map("checkin_id")
+  content   String   @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkin   Checkin  @relation(fields: [checkinId], references: [id], onDelete: Cascade)
+
+  @@index([checkinId])
+  @@index([userId])
+  @@map("comments")
 }

@@ -91,3 +91,28 @@ export interface Goal {
   totalDays: number;
   status: 'active' | 'completed' | 'overdue';
 }
+
+export interface CommentItem {
+  id: number;
+  userId: number;
+  username: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface FeedItem {
+  id: number;
+  userId: number;
+  username: string;
+  taskId: number;
+  taskTitle: string;
+  checkinDate: string;
+  checkedAt: string;
+  photoUrl: string | null;
+  mood: string | null;
+  note: string | null;
+  likeCount: number;
+  likedByMe: boolean;
+  commentCount: number;
+  comments: CommentItem[];
+}
