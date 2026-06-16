@@ -12,7 +12,7 @@ const password = ref('');
 const error = ref('');
 const busy = ref(false);
 
-const title = computed(() => (mode.value === 'login' ? '登录打卡' : '创建账号'));
+const title = computed(() => (mode.value === 'login' ? '登录' : '创建账号'));
 
 async function submit() {
   error.value = '';
@@ -35,9 +35,18 @@ async function submit() {
 <template>
   <main class="login-page">
     <section class="login-panel">
-      <p class="eyebrow">每日任务</p>
-      <h1>{{ title }}</h1>
-      <p class="login-subtitle">用一个账号记录每天完成的小事。</p>
+      <!-- Hero visual -->
+      <div class="login-hero">
+        <div class="login-logo">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="23" fill="#1f7268" opacity="0.1"/>
+            <circle cx="24" cy="24" r="16" fill="#1f7268" opacity="0.15"/>
+            <path d="M16 24.5l5 5 11-12" stroke="#1f7268" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="login-brand">每日打卡</p>
+        <p class="login-tagline">记录每天完成的小事</p>
+      </div>
 
       <div class="segmented">
         <button :class="{ active: mode === 'login' }" @click="mode = 'login'">登录</button>
@@ -67,7 +76,7 @@ async function submit() {
         </label>
         <p v-if="error" class="error-text">{{ error }}</p>
         <button class="primary-button" :disabled="busy" type="submit">
-          {{ busy ? '处理中' : title }}
+          {{ busy ? '处理中…' : title }}
         </button>
       </form>
     </section>

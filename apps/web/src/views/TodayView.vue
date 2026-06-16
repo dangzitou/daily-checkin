@@ -22,6 +22,17 @@ const loadError = ref('');
 const todayProgress = computed(() => summarizeToday(tasks.value));
 const allDone = computed(() => todayProgress.value.total > 0 && todayProgress.value.completed === todayProgress.value.total);
 
+// Time-based greeting
+const greeting = computed(() => {
+  const h = new Date().getHours();
+  if (h < 6) return '夜深了';
+  if (h < 9) return '早上好';
+  if (h < 12) return '上午好';
+  if (h < 14) return '中午好';
+  if (h < 18) return '下午好';
+  return '晚上好';
+});
+
 // Modal state
 const modalVisible = ref(false);
 const modalTask = ref<Task | null>(null);
@@ -72,7 +83,7 @@ async function handleCheckinSubmit(data: { photo: File | null; mood: MoodEmoji |
     );
 
     if (res.pointsEarned > 0) {
-      showToast(`+${res.pointsEarned} 积分 ✨`);
+      showToast(`+${res.pointsEarned} 积分`);
     }
     closeModal();
     await auth.loadMe();
@@ -104,26 +115,32 @@ onMounted(load);
 </script>
 
 <template>
-  <PageShell title="今日打卡" :eyebrow="stats?.today">
-    <section class="summary-band">
-      <div>
-        <span>完成进度</span>
-        <strong>{{ todayProgress.completed }}/{{ todayProgress.total }}</strong>
+  <PageShell :title="greeting" :eyebrow="stats?.today ?? today">
+    <!-- Stats -->
+    <section class="stats-row">
+      <div class="stat-card">
+        <span class="stat-label">完成</span>
+        <strong class="stat-value">{{ todayProgress.completed }}<small>/{{ todayProgress.total }}</small></strong>
       </div>
-      <div>
-        <span>连续</span>
-        <strong>{{ stats?.currentStreak ?? 0 }} 天</strong>
+      <div class="stat-card">
+        <span class="stat-label">连续</span>
+        <strong class="stat-value">{{ stats?.currentStreak ?? 0 }}<small>天</small></strong>
       </div>
-      <div>
-        <span>积分</span>
-        <strong>{{ auth.user?.points ?? 0 }}</strong>
+      <div class="stat-card stat-card--accent">
+        <span class="stat-label">积分</span>
+        <strong class="stat-value">{{ auth.user?.points ?? 0 }}</strong>
       </div>
     </section>
 
-    <div class="progress-track" aria-label="今日完成进度">
-      <div class="progress-fill" :style="{ width: `${todayProgress.percent}%` }" />
+    <!-- Progress -->
+    <div class="progress-bar-wrap" aria-label="今日完成进度">
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{ width: `${todayProgress.percent}%` }" />
+      </div>
+      <span class="progress-label">{{ todayProgress.percent }}%</span>
     </div>
 
+    <!-- Goals strip -->
     <section v-if="goals.length" class="today-goals">
       <article v-for="goal in goals.slice(0, 2)" :key="goal.id" class="goal-strip" :class="goal.status">
         <div>
@@ -155,7 +172,17 @@ onMounted(load);
     </section>
 
     <template v-else>
-      <section v-if="allDone" class="done-note">今天全部完成啦</section>
+      <!-- All done celebration -->
+      <section v-if="allDone" class="celebration">
+        <div class="celebration-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#b08520" stroke="#b08520" stroke-width="1"/>
+          </svg>
+        </div>
+        <span>今天全部完成</span>
+      </section>
+
+      <!-- Task list -->
       <section class="task-list">
         <TaskRow
           v-for="task in tasks"

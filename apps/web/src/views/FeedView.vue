@@ -111,11 +111,35 @@ async function deleteComment(item: FeedItem, comment: CommentItem) {
 
 function formatTime(dateStr: string) {
   const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return '刚刚';
+  if (diffMin < 60) return `${diffMin} 分钟前`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} 小时前`;
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
 function getInitial(name: string) {
   return name.charAt(0).toUpperCase();
+}
+
+// Generate consistent color from username
+function getAvatarColor(name: string): string {
+  const colors = [
+    'linear-gradient(135deg, #1f7268 0%, #2a9d8f 100%)',
+    'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    'linear-gradient(135deg, #ec4899 0%, #f472b6 100%)',
+    'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+    'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+    'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
 }
 
 onMounted(() => load());
@@ -151,7 +175,9 @@ onMounted(() => load());
       <article v-for="item in items" :key="item.id" class="feed-card">
         <!-- Header -->
         <div class="feed-header">
-          <div class="feed-avatar">{{ getInitial(item.username) }}</div>
+          <div class="feed-avatar" :style="{ background: getAvatarColor(item.username) }">
+            {{ getInitial(item.username) }}
+          </div>
           <div class="feed-meta">
             <span class="feed-username">{{ item.username }}</span>
             <span class="feed-task">{{ item.taskTitle }}</span>
@@ -165,37 +191,59 @@ onMounted(() => load());
             <span v-if="item.mood" class="feed-mood">{{ item.mood }}</span>
             <span v-if="item.note" class="feed-note">{{ item.note }}</span>
           </div>
-          <img v-if="item.photoUrl" :src="item.photoUrl" class="feed-photo" loading="lazy" alt="打卡照片" />
+          <div v-if="item.photoUrl" class="feed-photo-wrap">
+            <img :src="item.photoUrl" class="feed-photo" loading="lazy" alt="打卡照片" />
+          </div>
         </div>
 
         <!-- Actions -->
         <div class="feed-actions">
-          <button class="feed-action-btn" :class="{ active: item.likedByMe }" type="button" @click="toggleLike(item)">
-            <Heart :size="18" :fill="item.likedByMe ? 'currentColor' : 'none'" />
-            <span v-if="item.likeCount > 0">{{ item.likeCount }}</span>
+          <button
+            class="feed-action-btn"
+            :class="{ active: item.likedByMe }"
+            type="button"
+            @click="toggleLike(item)"
+          >
+            <Heart :size="17" :fill="item.likedByMe ? 'currentColor' : 'none'" :stroke-width="item.likedByMe ? 0 : 1.8" />
+            <span>{{ item.likeCount > 0 ? item.likeCount : '赞' }}</span>
           </button>
-          <button class="feed-action-btn" :class="{ active: expandedComments.has(item.id) }" type="button" @click="toggleComments(item)">
-            <MessageCircle :size="18" />
-            <span v-if="item.commentCount > 0">{{ item.commentCount }}</span>
+          <button
+            class="feed-action-btn"
+            :class="{ active: expandedComments.has(item.id) }"
+            type="button"
+            @click="toggleComments(item)"
+          >
+            <MessageCircle :size="17" :stroke-width="1.8" />
+            <span>{{ item.commentCount > 0 ? item.commentCount : '评论' }}</span>
           </button>
         </div>
 
         <!-- Comments -->
         <div v-if="expandedComments.has(item.id)" class="feed-comments">
-          <div v-if="commentLoading.has(item.id)" class="feed-comment-loading">加载中...</div>
+          <div v-if="commentLoading.has(item.id)" class="feed-comment-loading">加载中…</div>
 
           <div v-for="comment in item.comments" :key="comment.id" class="feed-comment">
             <span class="feed-comment-user">{{ comment.username }}</span>
             <span class="feed-comment-text">{{ comment.content }}</span>
             <button class="feed-comment-delete" type="button" aria-label="删除评论" @click="deleteComment(item, comment)">
-              <Trash2 :size="14" />
+              <Trash2 :size="13" />
             </button>
           </div>
 
           <form class="feed-comment-form" @submit.prevent="submitComment(item)">
-            <input v-model="commentTexts[item.id]" class="feed-comment-input" maxlength="500" placeholder="写评论..." :disabled="submittingComment.has(item.id)" />
-            <button class="feed-comment-submit" type="submit" :disabled="!commentTexts[item.id]?.trim() || submittingComment.has(item.id)">
-              <Send :size="16" />
+            <input
+              v-model="commentTexts[item.id]"
+              class="feed-comment-input"
+              maxlength="500"
+              placeholder="写评论…"
+              :disabled="submittingComment.has(item.id)"
+            />
+            <button
+              class="feed-comment-submit"
+              type="submit"
+              :disabled="!commentTexts[item.id]?.trim() || submittingComment.has(item.id)"
+            >
+              <Send :size="15" />
             </button>
           </form>
         </div>
@@ -203,7 +251,7 @@ onMounted(() => load());
 
       <div v-if="hasMore" class="feed-load-more">
         <button class="secondary-button" type="button" :disabled="loadingMore" @click="loadMore">
-          {{ loadingMore ? '加载中...' : '加载更多' }}
+          {{ loadingMore ? '加载中…' : '加载更多' }}
         </button>
       </div>
     </div>
