@@ -5,9 +5,11 @@ import { useRouter } from 'vue-router';
 import PageShell from '../components/PageShell.vue';
 import { useAuthStore } from '../stores/auth';
 import { api } from '../api';
+import { useToast } from '../composables/useToast';
 
 const auth = useAuthStore();
 const router = useRouter();
+const { show: showToast } = useToast();
 const balance = ref(0);
 const loading = ref(true);
 
@@ -16,7 +18,8 @@ onMounted(async () => {
     const res = await api.get<{ balance: number }>('/points/balance');
     balance.value = res.balance;
   } catch {
-    // ignore
+    // fallback to user points from auth
+    balance.value = auth.user?.points ?? 0;
   } finally {
     loading.value = false;
   }

@@ -153,12 +153,14 @@ function handleBackdropClick(e: MouseEvent) {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 200;
-  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: flex-end;
   justify-content: center;
   animation: fadeIn 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 @keyframes fadeIn {
@@ -168,12 +170,12 @@ function handleBackdropClick(e: MouseEvent) {
 
 .modal-card {
   background: var(--paper);
-  border-radius: 20px 20px 0 0;
+  border-radius: 18px 18px 0 0;
   width: 100%;
   max-width: 520px;
   max-height: 85vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease;
+  animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes slideUp {
@@ -185,13 +187,13 @@ function handleBackdropClick(e: MouseEvent) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--line);
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -201,13 +203,19 @@ function handleBackdropClick(e: MouseEvent) {
   padding: 4px;
   cursor: pointer;
   color: var(--muted);
+  border-radius: 6px;
+  transition: background 180ms ease;
+}
+
+.modal-close:hover {
+  background: var(--surface);
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .hidden {
@@ -221,12 +229,12 @@ function handleBackdropClick(e: MouseEvent) {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 32px;
-  border: 2px dashed var(--line-strong);
+  padding: 28px;
+  border: 1.5px dashed var(--line-strong);
   border-radius: 12px;
   cursor: pointer;
   color: var(--muted);
-  transition: border-color 0.2s, color 0.2s;
+  transition: border-color 180ms ease, color 180ms ease;
 }
 
 .photo-upload:hover {
@@ -265,27 +273,32 @@ function handleBackdropClick(e: MouseEvent) {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.55);
   color: white;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background 180ms ease;
+}
+
+.photo-remove:hover {
+  background: rgba(0, 0, 0, 0.75);
 }
 
 /* Mood */
 .section-label {
   display: block;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--muted);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .mood-picker {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .mood-btn {
@@ -293,13 +306,17 @@ function handleBackdropClick(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 4px;
-  border: 2px solid var(--line);
-  border-radius: 12px;
+  gap: 3px;
+  padding: 8px 4px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
   background: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 180ms ease;
+}
+
+.mood-btn:hover {
+  border-color: var(--line-strong);
 }
 
 .mood-btn.active {
@@ -308,12 +325,12 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .mood-emoji {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
 }
 
 .mood-label {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
 }
 
@@ -328,46 +345,48 @@ function handleBackdropClick(e: MouseEvent) {
 
 .note-input {
   width: 100%;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--line-strong);
   border-radius: 10px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   resize: vertical;
   font-family: inherit;
   box-sizing: border-box;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .note-input:focus {
   outline: none;
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(31 114 104 / 12%);
 }
 
 .note-count {
   position: absolute;
   bottom: 8px;
   right: 12px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
 }
 
 /* Footer */
 .modal-footer {
   display: flex;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: 10px;
+  padding: 14px 20px;
   border-top: 1px solid var(--line);
 }
 
 .btn-cancel,
 .btn-submit {
   flex: 1;
-  padding: 12px;
+  padding: 11px;
   border-radius: 10px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: background 180ms ease, opacity 180ms ease, transform 120ms ease;
 }
 
 .btn-cancel {
@@ -376,21 +395,34 @@ function handleBackdropClick(e: MouseEvent) {
   color: var(--ink);
 }
 
+.btn-cancel:hover {
+  background: #e8ede9;
+}
+
 .btn-submit {
   background: var(--primary);
   border: none;
   color: white;
+  box-shadow: 0 4px 12px rgb(31 114 104 / 20%);
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: var(--primary-strong);
+}
+
+.btn-submit:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn-submit:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
 .spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;

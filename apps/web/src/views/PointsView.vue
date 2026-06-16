@@ -42,8 +42,10 @@ onMounted(load);
       </div>
     </section>
 
-    <section v-if="loading" class="empty-state">加载中…</section>
-    <section v-else-if="logs.length === 0" class="empty-state">还没有积分记录，快去打卡吧！</section>
+    <section v-if="loading" class="log-list">
+      <div v-for="i in 4" :key="i" class="skeleton-row" style="height:52px" />
+    </section>
+    <section v-else-if="logs.length === 0" class="empty-state">还没有积分记录，快去打卡吧</section>
     <section v-else class="log-list">
       <article v-for="log in logs" :key="log.id" class="log-item">
         <div class="log-info">

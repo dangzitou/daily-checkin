@@ -150,12 +150,12 @@ onMounted(load);
 
     <!-- Empty state -->
     <section v-else-if="tasks.length === 0" class="empty-state actionable-empty">
-      <span>还没有任务</span>
-      <RouterLink to="/tasks" class="secondary-button">去添加第一个任务 →</RouterLink>
+      <span>还没有任务，去添加一个开始打卡吧</span>
+      <RouterLink to="/tasks" class="secondary-button">添加任务</RouterLink>
     </section>
 
     <template v-else>
-      <section v-if="allDone" class="done-note">🎉 今天完成啦</section>
+      <section v-if="allDone" class="done-note">今天全部完成啦</section>
       <section class="task-list">
         <TaskRow
           v-for="task in tasks"

@@ -143,7 +143,7 @@ onMounted(() => load());
 
     <!-- Empty state -->
     <div v-else-if="items.length === 0" class="empty-state">
-      今天还没有人打卡哦~
+      今天还没有人打卡
     </div>
 
     <!-- Feed list -->

@@ -22,26 +22,26 @@ const { toasts } = useToast();
   top: calc(16px + env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: 200;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   pointer-events: none;
-  width: min(90%, 400px);
+  width: min(90%, 380px);
 }
 
 .toast {
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
   font-size: 14px;
   text-align: center;
   pointer-events: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(23, 32, 29, 0.1);
 }
 
 .toast.success {
-  background: var(--primary-soft, #e3f3ef);
+  background: var(--primary-soft, #e0f2ee);
   color: var(--primary-strong, #155c55);
   border: 1px solid #9bcfc6;
 }

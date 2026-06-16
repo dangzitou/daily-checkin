@@ -43,7 +43,7 @@ async function redeem(prize: Prize) {
     await api.post('/redemptions', { prizeId: prize.id });
     await auth.loadMe();
     await load();
-    showMessage('兑换成功！', 'success');
+    showMessage('兑换成功', 'success');
   } catch (e) {
     showMessage(e instanceof ApiError ? e.message : '兑换失败', 'error');
   } finally {
@@ -74,7 +74,9 @@ onMounted(load);
 
     <div v-if="message" class="toast" :class="messageClass">{{ message }}</div>
 
-    <section v-if="loading" class="empty-state">加载中…</section>
+    <section v-if="loading" class="prize-grid">
+      <div v-for="i in 3" :key="i" class="skeleton-row" style="height:100px" />
+    </section>
 
     <section v-else-if="loadError" class="empty-state actionable-empty">
       <span>{{ loadError }}</span>
