@@ -16,16 +16,20 @@
     <title>每日打卡</title>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">跳到内容</a>
     <div id="app">
-      <div style="display:grid;place-items:center;min-height:100vh;font-family:system-ui;color:#5e7069;">
+      <div class="boot-screen">
+        <div class="boot-mark"></div>
         <p>加载中…</p>
       </div>
     </div>
-    <div id="app-error" style="display:none;position:fixed;inset:0;z-index:9999;background:#fff;font-family:system-ui;padding:40px;text-align:center;">
-      <p style="font-size:48px;margin:0;">⚠️</p>
-      <h2 style="color:#17201d;">页面加载失败</h2>
-      <p style="color:#5e7069;font-size:14px;">缓存过期，请点击下方按钮刷新</p>
-      <button onclick="clearCacheAndReload()" style="margin-top:20px;padding:14px 28px;font-size:16px;font-weight:600;background:#1f7268;color:#fff;border:none;border-radius:10px;cursor:pointer;">强制刷新</button>
+    <div id="app-error" class="app-error" style="display:none;">
+      <div class="app-error-panel">
+        <div class="app-error-mark">!</div>
+        <h2>页面加载失败</h2>
+        <p>缓存可能过期了，刷新后重试。</p>
+        <button class="primary-button" onclick="clearCacheAndReload()">强制刷新</button>
+      </div>
     </div>
     <script>
       function clearCacheAndReload() {
@@ -45,6 +49,101 @@
       }, 3000);
       window.__appLoaded = function() { clearTimeout(errTimer); };
     </script>
+    <style>
+      .skip-link {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 300;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: #fbfbf8;
+        color: #141917;
+        box-shadow: 0 16px 28px rgba(17, 25, 23, 0.12);
+        transform: translateY(-180%);
+        transition: transform 180ms ease;
+      }
+
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      .boot-screen {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        gap: 14px;
+        color: #5f6d67;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(24, 106, 96, 0.12), transparent 26%),
+          radial-gradient(circle at 80% 0%, rgba(161, 111, 45, 0.12), transparent 24%),
+          linear-gradient(180deg, #f8faf7 0%, #f3f5f1 100%);
+        font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      }
+
+      .boot-mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #dceee9, #bfdcd5);
+        box-shadow: 0 12px 24px rgba(24, 106, 96, 0.12);
+      }
+
+      .boot-screen p {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .app-error {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at top left, rgba(24, 106, 96, 0.12), transparent 28%),
+          radial-gradient(circle at top right, rgba(161, 111, 45, 0.12), transparent 24%),
+          linear-gradient(180deg, #f8faf7 0%, #f3f5f1 100%);
+      }
+
+      .app-error-panel {
+        width: min(100%, 420px);
+        padding: 28px;
+        border-radius: 24px;
+        background: rgba(251, 251, 248, 0.94);
+        border: 1px solid rgba(223, 230, 225, 0.85);
+        box-shadow: 0 24px 44px rgba(17, 25, 23, 0.12);
+        text-align: center;
+      }
+
+      .app-error-mark {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 16px;
+        border-radius: 18px;
+        background: #f8e6e6;
+        color: #b83e3e;
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      .app-error-panel h2 {
+        margin: 0 0 8px;
+        color: #141917;
+        font-size: 20px;
+      }
+
+      .app-error-panel p {
+        margin: 0 0 18px;
+        color: #66736d;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+    </style>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

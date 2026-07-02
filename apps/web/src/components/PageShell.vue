@@ -1,5 +1,5 @@
 <template>
-  <main class="page-shell">
+  <main id="main-content" class="page-shell" tabindex="-1">
     <header class="page-header">
       <div class="page-header-left">
         <button v-if="showBack" class="back-btn" type="button" aria-label="返回" @click="goBack">

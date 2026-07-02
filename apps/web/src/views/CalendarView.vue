@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { api, ApiError } from '../api';
 import TaskRow from '../components/TaskRow.vue';
 import PageShell from '../components/PageShell.vue';
+import StatePanel from '../components/StatePanel.vue';
 import { buildMonthCells } from '../lib/calendar';
 import { formatLocalDate, formatMonth } from '../lib/date';
 import { summarizeToday } from '../lib/progress';
@@ -76,7 +77,7 @@ async function toggle(task: Task) {
       if (res.pointsDeducted > 0) showToast(`-${res.pointsDeducted} 积分`, 'warn');
     } else {
       const res = await api.post<{ pointsEarned: number }>(`/tasks/${task.id}/checkins?date=${selectedDate.value}`);
-      if (res.pointsEarned > 0) showToast(`+${res.pointsEarned} 积分 ✨`);
+      if (res.pointsEarned > 0) showToast(`+${res.pointsEarned} 积分`);
     }
     await auth.loadMe();
     await Promise.all([load(), loadSelectedDate()]);
@@ -122,69 +123,104 @@ onMounted(async () => {
       </div>
     </template>
 
-    <!-- Calendar grid -->
-    <section v-if="calendarError" class="empty-state actionable-empty">
-      <span>{{ calendarError }}</span>
-      <button class="secondary-button" type="button" @click="load">重新加载</button>
-    </section>
-    <section v-else class="calendar-grid">
-      <span v-for="day in ['一', '二', '三', '四', '五', '六', '日']" :key="day" class="weekday">{{ day }}</span>
-      <button
-        v-for="cell in cells"
-        :key="cell.date"
-        class="day-cell"
-        :class="{
-          muted: !cell.inMonth,
-          selected: cell.date === selectedDate,
-          complete: cell.complete,
-          partial: !cell.complete && (cell.completionRate ?? 0) > 0,
-        }"
-        @click="selectDate(cell.date)"
-      >
-        <strong>{{ cell.day }}</strong>
-        <span v-if="cell.totalTasks">{{ cell.completedTasks }}/{{ cell.totalTasks }}</span>
-      </button>
-    </section>
-
-    <section class="day-detail">
-      <header class="detail-header">
-        <div>
-          <p class="eyebrow">选中日期</p>
-          <h2>{{ selectedDate }}</h2>
-        </div>
-        <strong>{{ progress.completed }}/{{ progress.total }}</strong>
-      </header>
-
-      <form class="compact-form" @submit.prevent="createDatedTask">
-        <label>
-          <span>当天任务</span>
-          <input v-model="form.title" maxlength="120" placeholder="比如：买花、体检、整理房间" required />
-        </label>
-        <label>
-          <span>备注</span>
-          <input v-model="form.description" maxlength="500" placeholder="可不填" />
-        </label>
-        <p v-if="error" class="error-text">{{ error }}</p>
-        <button class="primary-button" :disabled="creating" type="submit">
-          <Plus :size="18" />
-          添加到这一天
-        </button>
-      </form>
-
-      <section v-if="loadingTasks" class="task-list">
-        <div v-for="i in 2" :key="i" class="skeleton-row" />
+    <div class="calendar-layout">
+      <section class="calendar-panel">
+        <header class="calendar-panel-head">
+          <div>
+            <p class="eyebrow">月视图</p>
+            <h2>{{ currentMonth }}</h2>
+          </div>
+          <p>查看整个月的完成情况，选中某一天后可在右侧直接补充当天任务和记录。</p>
+        </header>
+        <StatePanel v-if="calendarError" title="这个月的日历没有加载出来" :description="calendarError" compact>
+          <button class="secondary-button" type="button" @click="load">重新加载</button>
+        </StatePanel>
+        <section v-else class="calendar-grid">
+          <span v-for="day in ['一', '二', '三', '四', '五', '六', '日']" :key="day" class="weekday">{{ day }}</span>
+          <button
+            v-for="cell in cells"
+            :key="cell.date"
+            class="day-cell"
+            :class="{
+              muted: !cell.inMonth,
+              selected: cell.date === selectedDate,
+              complete: cell.complete,
+              partial: !cell.complete && (cell.completionRate ?? 0) > 0,
+            }"
+            @click="selectDate(cell.date)"
+          >
+            <strong>{{ cell.day }}</strong>
+            <span v-if="cell.totalTasks">{{ cell.completedTasks }}/{{ cell.totalTasks }}</span>
+          </button>
+        </section>
       </section>
-      <template v-else>
-        <section v-if="datedTasks.length" class="task-section">
-          <h3>这一天</h3>
-          <TaskRow v-for="task in datedTasks" :key="task.id" :task="task" :busy="busyTaskId === task.id" @toggle="toggle" />
+
+      <section class="day-detail">
+        <header class="detail-header">
+          <div class="detail-header-copy">
+            <p class="eyebrow">选中日期</p>
+            <h2>{{ selectedDate }}</h2>
+            <p class="detail-header-note">
+              {{ tasks.length ? `今天共有 ${tasks.length} 个任务，已完成 ${progress.completed} 个。` : '先添加当天任务，或查看常驻任务在这一天的安排。' }}
+            </p>
+          </div>
+          <div class="detail-header-progress">
+            <strong>{{ progress.completed }}/{{ progress.total }}</strong>
+            <span>完成进度</span>
+          </div>
+        </header>
+
+        <section class="detail-summary-row">
+          <article class="mini-stat-card">
+            <span>已完成</span>
+            <strong>{{ progress.completed }}</strong>
+          </article>
+          <article class="mini-stat-card">
+            <span>待处理</span>
+            <strong>{{ Math.max(progress.total - progress.completed, 0) }}</strong>
+          </article>
+          <article class="mini-stat-card">
+            <span>总任务</span>
+            <strong>{{ progress.total }}</strong>
+          </article>
         </section>
-        <section v-if="residentTasks.length" class="task-section">
-          <h3>常驻</h3>
-          <TaskRow v-for="task in residentTasks" :key="task.id" :task="task" :busy="busyTaskId === task.id" @toggle="toggle" />
+
+        <form class="compact-form" @submit.prevent="createDatedTask">
+          <label>
+            <span>当天任务</span>
+            <input v-model="form.title" maxlength="120" placeholder="比如：买花、体检、整理房间" required />
+          </label>
+          <label>
+            <span>备注</span>
+            <input v-model="form.description" maxlength="500" placeholder="可不填" />
+          </label>
+          <p v-if="error" class="error-text">{{ error }}</p>
+          <button class="primary-button" :disabled="creating" type="submit">
+            <Plus :size="18" />
+            添加到这一天
+          </button>
+        </form>
+
+        <section v-if="loadingTasks" class="task-list">
+          <div v-for="i in 2" :key="i" class="skeleton-row" />
         </section>
-        <section v-if="tasks.length === 0" class="empty-state">这一天还没有任务。</section>
-      </template>
-    </section>
+        <template v-else>
+          <section v-if="datedTasks.length" class="task-section">
+            <h3>这一天</h3>
+            <TaskRow v-for="task in datedTasks" :key="task.id" :task="task" :busy="busyTaskId === task.id" @toggle="toggle" />
+          </section>
+          <section v-if="residentTasks.length" class="task-section">
+            <h3>常驻</h3>
+            <TaskRow v-for="task in residentTasks" :key="task.id" :task="task" :busy="busyTaskId === task.id" @toggle="toggle" />
+          </section>
+          <StatePanel
+            v-if="tasks.length === 0"
+            title="这一天还没有任务"
+            description="可以添加一个当天任务，或者等常驻任务在这里出现。"
+            compact
+          />
+        </template>
+      </section>
+    </div>
   </PageShell>
 </template>

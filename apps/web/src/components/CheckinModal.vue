@@ -73,7 +73,11 @@ function handleBackdropClick(e: MouseEvent) {
     <div v-if="visible" class="modal-overlay" @click="handleBackdropClick">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>打卡 · {{ task.title }}</h3>
+          <div class="modal-header-copy">
+            <p class="modal-eyebrow">完成打卡</p>
+            <h3>{{ task.title }}</h3>
+            <p class="modal-subcopy">上传照片、记录状态，完成后会立即计入今天的进度和积分。</p>
+          </div>
           <button class="modal-close" @click="$emit('close')">
             <X :size="20" />
           </button>
@@ -98,13 +102,13 @@ function handleBackdropClick(e: MouseEvent) {
                 @change="onPhotoSelect"
               />
               <Camera :size="32" />
-              <span>拍照 / 选择照片</span>
+              <span>上传照片</span>
             </label>
           </div>
 
           <!-- Mood section -->
           <div class="mood-section">
-            <label class="section-label">今天心情</label>
+            <label class="section-label">今天状态</label>
             <div class="mood-picker">
               <button
                 v-for="option in MOOD_OPTIONS"
@@ -125,7 +129,7 @@ function handleBackdropClick(e: MouseEvent) {
             <textarea
               v-model="note"
               class="note-input"
-              placeholder="记录一些今天的小事情..."
+              placeholder="写一点今天的记录"
               maxlength="500"
               rows="3"
             />
@@ -141,7 +145,7 @@ function handleBackdropClick(e: MouseEvent) {
             @click="handleSubmit"
           >
             <span v-if="isSubmitting" class="spinner"></span>
-            {{ isSubmitting ? '打卡中...' : '打卡！' }}
+            {{ isSubmitting ? '提交中…' : '完成打卡' }}
           </button>
         </div>
       </div>
@@ -170,7 +174,7 @@ function handleBackdropClick(e: MouseEvent) {
 
 .modal-card {
   background: var(--paper);
-  border-radius: 18px 18px 0 0;
+  border-radius: 24px 24px 0 0;
   width: 100%;
   max-width: 520px;
   max-height: 85vh;
@@ -185,16 +189,39 @@ function handleBackdropClick(e: MouseEvent) {
 
 .modal-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 14px 20px;
+  gap: 16px;
+  padding: 16px 20px 14px;
   border-bottom: 1px solid var(--line);
+}
+
+.modal-header-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.modal-eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.modal-subcopy {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .modal-close {
@@ -212,7 +239,7 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .modal-body {
-  padding: 18px 20px;
+  padding: 18px 20px 20px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -224,14 +251,15 @@ function handleBackdropClick(e: MouseEvent) {
 
 /* Photo */
 .photo-upload {
-  display: flex;
+  display: grid;
+  place-items: center;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 28px;
+  min-height: 164px;
+  padding: 20px;
   border: 1.5px dashed var(--line-strong);
-  border-radius: 12px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(251, 251, 248, 0.92), rgba(245, 248, 243, 0.92));
   cursor: pointer;
   color: var(--muted);
   transition: border-color 180ms ease, color 180ms ease;
@@ -245,7 +273,7 @@ function handleBackdropClick(e: MouseEvent) {
 .photo-error {
   margin: 0 0 8px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fdf0f0;
   color: var(--danger, #b42318);
   font-size: 13px;
@@ -255,8 +283,9 @@ function handleBackdropClick(e: MouseEvent) {
 
 .photo-preview {
   position: relative;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .photo-preview img {
@@ -273,7 +302,7 @@ function handleBackdropClick(e: MouseEvent) {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(17, 25, 23, 0.62);
   color: white;
   border: none;
   display: flex;
@@ -297,20 +326,21 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .mood-picker {
-  display: flex;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .mood-btn {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 8px 4px;
+  gap: 5px;
+  min-height: 72px;
+  padding: 10px 6px;
   border: 1.5px solid var(--line);
-  border-radius: 10px;
-  background: none;
+  border-radius: 14px;
+  background: rgba(251, 251, 248, 0.96);
   cursor: pointer;
   transition: all 180ms ease;
 }
@@ -325,12 +355,12 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .mood-emoji {
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1;
 }
 
 .mood-label {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
 }
 
@@ -345,26 +375,28 @@ function handleBackdropClick(e: MouseEvent) {
 
 .note-input {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: 10px;
+  min-height: 96px;
+  padding: 12px 12px 24px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(251, 251, 248, 0.95);
   font-size: 14px;
   line-height: 1.55;
   resize: vertical;
   font-family: inherit;
   box-sizing: border-box;
-  transition: border-color 180ms ease, box-shadow 180ms ease;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 .note-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgb(31 114 104 / 12%);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .note-count {
   position: absolute;
-  bottom: 8px;
+  bottom: 10px;
   right: 12px;
   font-size: 11px;
   color: var(--muted);
@@ -374,43 +406,51 @@ function handleBackdropClick(e: MouseEvent) {
 .modal-footer {
   display: flex;
   gap: 10px;
-  padding: 14px 20px;
+  padding: 16px 20px 20px;
   border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(251, 251, 248, 0), rgba(245, 248, 243, 0.62));
 }
 
 .btn-cancel,
 .btn-submit {
   flex: 1;
-  padding: 11px;
-  border-radius: 10px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 180ms ease, opacity 180ms ease, transform 120ms ease;
+  transition: background 180ms ease, opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .btn-cancel {
-  background: var(--surface);
-  border: none;
+  background: rgba(251, 251, 248, 0.95);
+  border: 1.5px solid var(--line);
   color: var(--ink);
 }
 
 .btn-cancel:hover {
-  background: #e8ede9;
+  background: var(--surface-strong);
+  border-color: var(--line-strong);
 }
 
 .btn-submit {
   background: var(--primary);
   border: none;
   color: white;
-  box-shadow: 0 4px 12px rgb(31 114 104 / 20%);
+  box-shadow: 0 8px 18px rgba(24, 106, 96, 0.18);
 }
 
 .btn-submit:hover:not(:disabled) {
   background: var(--primary-strong);
+  box-shadow: 0 12px 22px rgba(24, 106, 96, 0.22);
 }
 
 .btn-submit:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-cancel:active {
   transform: scale(0.98);
 }
 

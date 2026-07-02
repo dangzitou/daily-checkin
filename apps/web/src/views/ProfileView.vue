@@ -30,46 +30,72 @@ async function logout() {
 
 <template>
   <PageShell title="我的">
-    <!-- User Card -->
-    <section class="profile-card">
-      <div class="profile-avatar">
-        {{ auth.user?.username?.charAt(0)?.toUpperCase() ?? '?' }}
-      </div>
-      <div class="profile-info">
-        <h2>{{ auth.user?.username }}</h2>
-        <p class="profile-points">
-          <Star :size="14" class="points-star" />
-          {{ loading ? '…' : balance }} 积分
-        </p>
-      </div>
-      <div v-if="auth.user?.isAdmin" class="profile-badge">
-        <Award :size="14" />
-        管理员
-      </div>
-    </section>
+    <div class="account-stack">
+      <section class="profile-card">
+        <div class="profile-main">
+          <div class="profile-avatar">
+            {{ auth.user?.username?.charAt(0)?.toUpperCase() ?? '?' }}
+          </div>
+          <div class="profile-info">
+            <p class="eyebrow">当前账号</p>
+            <h2>{{ auth.user?.username }}</h2>
+            <p class="profile-points">
+              <Star :size="14" class="points-star" />
+              {{ loading ? '…' : balance }} 积分
+            </p>
+          </div>
+        </div>
+        <div class="profile-meta">
+          <div v-if="auth.user?.isAdmin" class="profile-badge">
+            <Award :size="14" />
+            管理员
+          </div>
+          <div class="profile-badge profile-badge--soft">
+            ID {{ auth.user?.id }}
+          </div>
+        </div>
+      </section>
 
-    <!-- Menu Items -->
-    <section class="profile-menu">
-      <button class="profile-menu-item" @click="router.push('/shop')">
-        <Gift :size="18" />
-        <span>积分商城</span>
-        <ChevronRight :size="16" class="arrow" />
-      </button>
-      <button class="profile-menu-item" @click="router.push('/points')">
-        <Star :size="18" />
-        <span>积分明细</span>
-        <ChevronRight :size="16" class="arrow" />
-      </button>
-      <button class="profile-menu-item" @click="router.push('/settings')">
-        <Settings :size="18" />
-        <span>账号设置</span>
-        <ChevronRight :size="16" class="arrow" />
-      </button>
-    </section>
+      <section class="account-panel">
+        <header class="account-panel-head">
+          <div>
+            <p class="eyebrow">快捷入口</p>
+            <h2>常用操作</h2>
+          </div>
+          <p>把积分、兑换和账号设置放在一个固定区域里，查找更直接。</p>
+        </header>
+        <section class="profile-menu">
+          <button class="profile-menu-item" type="button" @click="router.push('/shop')">
+            <Gift :size="18" />
+            <span>积分商城</span>
+            <ChevronRight :size="16" class="arrow" />
+          </button>
+          <button class="profile-menu-item" type="button" @click="router.push('/points')">
+            <Star :size="18" />
+            <span>积分明细</span>
+            <ChevronRight :size="16" class="arrow" />
+          </button>
+          <button class="profile-menu-item" type="button" @click="router.push('/settings')">
+            <Settings :size="18" />
+            <span>账号设置</span>
+            <ChevronRight :size="16" class="arrow" />
+          </button>
+        </section>
+      </section>
 
-    <button class="secondary-button full-width logout-btn" @click="logout">
-      <LogOut :size="16" />
-      退出登录
-    </button>
+      <section class="account-panel account-panel--quiet">
+        <header class="account-panel-head">
+          <div>
+            <p class="eyebrow">会话</p>
+            <h2>登录状态</h2>
+          </div>
+          <p>退出后需要重新登录，当前的打卡、目标和积分记录不会丢失。</p>
+        </header>
+        <button class="secondary-button full-width logout-btn" type="button" @click="logout">
+          <LogOut :size="16" />
+          退出登录
+        </button>
+      </section>
+    </div>
   </PageShell>
 </template>

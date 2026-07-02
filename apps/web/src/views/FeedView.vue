@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Heart, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-vue-next';
+import { Heart, MessageCircle, Send, Trash2 } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import { api, ApiError } from '../api';
 import PageShell from '../components/PageShell.vue';
+import StatePanel from '../components/StatePanel.vue';
 import { useToast } from '../composables/useToast';
 import type { CommentItem, FeedItem } from '../types';
 
@@ -16,7 +17,6 @@ const loadingMore = ref(false);
 
 // State per feed item
 const expandedComments = ref<Set<number>>(new Set());
-const showActions = ref<Set<number>>(new Set());
 const commentLoading = ref<Set<number>>(new Set());
 const commentTexts = ref<Record<number, string>>({});
 const submittingComment = ref<Set<number>>(new Set());
@@ -45,20 +45,11 @@ function loadMore() {
   load(true);
 }
 
-function toggleActionMenu(item: FeedItem) {
-  if (showActions.value.has(item.id)) {
-    showActions.value.delete(item.id);
-  } else {
-    showActions.value.add(item.id);
-  }
-}
-
 async function toggleLike(item: FeedItem) {
   const wasLiked = item.likedByMe;
   const wasCount = item.likeCount;
   item.likedByMe = !wasLiked;
   item.likeCount += wasLiked ? -1 : 1;
-  showActions.value.delete(item.id);
 
   try {
     const res = await api.post<{ liked: boolean }>(`/feed/checkins/${item.id}/like`);
@@ -68,12 +59,6 @@ async function toggleLike(item: FeedItem) {
     item.likeCount = wasCount;
     showToast('操作失败', 'error');
   }
-}
-
-function openComment(item: FeedItem) {
-  showActions.value.delete(item.id);
-  expandedComments.value.add(item.id);
-  if (item.comments.length < item.commentCount) loadAllComments(item);
 }
 
 function toggleComments(item: FeedItem) {
@@ -156,12 +141,30 @@ onMounted(() => load());
 
 <template>
   <PageShell title="广场" eyebrow="今日动态">
+    <section v-if="!loading && !loadError && items.length" class="feed-hero">
+      <div class="feed-hero-copy">
+        <p class="eyebrow">今天的打卡流</p>
+        <h2>{{ items.length }} 条更新</h2>
+        <p>这里汇总了今天公开的打卡、照片、心情和互动。</p>
+      </div>
+      <div class="feed-hero-stats">
+        <div class="feed-stat">
+          <span>点赞</span>
+          <strong>{{ items.reduce((sum, item) => sum + item.likeCount, 0) }}</strong>
+        </div>
+        <div class="feed-stat">
+          <span>评论</span>
+          <strong>{{ items.reduce((sum, item) => sum + item.commentCount, 0) }}</strong>
+        </div>
+      </div>
+    </section>
+
     <!-- Loading skeleton -->
     <div v-if="loading" class="moments-list">
       <div v-for="i in 4" :key="i" class="moments-item">
         <div class="skeleton-avatar" />
         <div class="moments-body">
-          <div class="skeleton-line w40" style="margin-bottom:10px" />
+          <div class="skeleton-line w40 tight" />
           <div class="skeleton-line w80" />
           <div class="skeleton-line w60" />
         </div>
@@ -169,65 +172,59 @@ onMounted(() => load());
     </div>
 
     <!-- Error state -->
-    <div v-else-if="loadError" class="empty-state actionable-empty">
-      <span>{{ loadError }}</span>
+    <StatePanel v-else-if="loadError" title="广场内容没有加载出来" :description="loadError" compact>
       <button class="secondary-button" type="button" @click="load()">重新加载</button>
-    </div>
+    </StatePanel>
 
     <!-- Empty state -->
-    <div v-else-if="items.length === 0" class="empty-state">
-      今天还没有人打卡
-    </div>
+    <StatePanel
+      v-else-if="items.length === 0"
+      title="今天的广场还没有新动态"
+      description="等大家完成打卡后，这里会陆续出现照片、心情和评论。"
+      compact
+    />
 
     <!-- Feed list -->
-    <div v-else class="moments-list">
+    <div v-else class="moments-list moments-board">
       <article v-for="item in items" :key="item.id" class="moments-item">
-        <!-- Avatar -->
-        <div class="moments-avatar" :style="{ background: getAvatarColor(item.username) }">
+        <div class="moments-avatar avatar-swatch" :style="{ background: getAvatarColor(item.username) }">
           {{ getInitial(item.username) }}
         </div>
 
-        <!-- Body -->
         <div class="moments-body">
-          <!-- Username + task tag -->
-          <div class="moments-user-row">
-            <span class="moments-username">{{ item.username }}</span>
-            <span class="moments-task-tag">{{ item.taskTitle }}</span>
+          <div class="moments-head">
+            <div class="moments-user-row">
+              <span class="moments-username">{{ item.username }}</span>
+              <span class="moments-task-tag">{{ item.taskTitle }}</span>
+            </div>
+            <span class="moments-time">{{ formatTime(item.checkedAt) }}</span>
           </div>
 
-          <!-- Text content -->
           <div v-if="item.mood || item.note" class="moments-text">
             <span v-if="item.mood" class="moments-mood">{{ item.mood }}</span>
             <span v-if="item.note" class="moments-note">{{ item.note }}</span>
           </div>
+          <div v-else class="moments-text moments-text--bare">
+            <span class="moments-note moments-note--soft">完成了今天这项打卡。</span>
+          </div>
 
-          <!-- Photo -->
           <div v-if="item.photoUrl" class="moments-photo-wrap">
             <img :src="item.photoUrl" class="moments-photo" loading="lazy" alt="打卡照片" />
           </div>
 
-          <!-- Time + action button -->
           <div class="moments-footer">
-            <span class="moments-time">{{ formatTime(item.checkedAt) }}</span>
-            <div class="moments-action-area">
-              <!-- Action popup -->
-              <div v-if="showActions.has(item.id)" class="moments-action-popup">
-                <button class="moments-action-popbtn" :class="{ liked: item.likedByMe }" type="button" @click="toggleLike(item)">
-                  <Heart :size="15" :fill="item.likedByMe ? 'currentColor' : 'none'" />
-                  {{ item.likedByMe ? '取消' : '赞' }}
-                </button>
-                <button class="moments-action-popbtn" type="button" @click="openComment(item)">
-                  <MessageCircle :size="15" />
-                  评论
-                </button>
-              </div>
-              <button class="moments-more-btn" type="button" aria-label="更多操作" @click.stop="toggleActionMenu(item)">
-                <MoreHorizontal :size="16" />
+            <div class="moments-inline-actions">
+              <button class="moments-inline-btn" :class="{ liked: item.likedByMe }" type="button" @click="toggleLike(item)">
+                <Heart :size="15" :fill="item.likedByMe ? 'currentColor' : 'none'" />
+                <span>{{ item.likeCount ? `${item.likeCount} 个赞` : '点赞' }}</span>
+              </button>
+              <button class="moments-inline-btn" type="button" @click="toggleComments(item)">
+                <MessageCircle :size="15" />
+                <span>{{ expandedComments.has(item.id) ? '收起评论' : item.commentCount ? `${item.commentCount} 条评论` : '写评论' }}</span>
               </button>
             </div>
           </div>
 
-          <!-- Like list (WeChat style) -->
           <div v-if="item.likeCount > 0" class="moments-like-bar">
             <Heart :size="12" fill="#e25555" stroke="none" />
             <span class="moments-like-names">
@@ -240,7 +237,6 @@ onMounted(() => load());
             </span>
           </div>
 
-          <!-- Comments section (WeChat style: gray background) -->
           <div v-if="expandedComments.has(item.id) || item.commentCount > 0" class="moments-comment-section">
             <div v-if="commentLoading.has(item.id)" class="moments-comment-loading">加载中…</div>
 
@@ -253,7 +249,6 @@ onMounted(() => load());
               </button>
             </div>
 
-            <!-- Comment input -->
             <div v-if="expandedComments.has(item.id)" class="moments-input-row">
               <input
                 v-model="commentTexts[item.id]"

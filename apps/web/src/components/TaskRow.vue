@@ -42,19 +42,23 @@ function handleClick(task: Task) {
       <span class="task-copy">
         <span class="task-title-line">
           <strong>{{ task.title }}</strong>
-          <span class="status-pill">{{ task.checked ? '已完成' : '待完成' }}</span>
-          <span v-if="task.mood" class="task-mood-badge">{{ task.mood }}</span>
-          <span v-if="task.photoUrl" class="task-photo-badge">
-            <Image :size="12" />
+          <span class="task-status-pack">
+            <span class="status-pill">{{ task.checked ? '已完成' : '待完成' }}</span>
+            <span v-if="task.mood" class="task-mood-badge">{{ task.mood }}</span>
+            <span v-if="task.photoUrl" class="task-photo-badge">
+              <Image :size="12" />
+            </span>
           </span>
         </span>
-        <span v-if="task.description">{{ task.description }}</span>
-        <span v-if="showScope" class="task-meta">
-          {{ task.scope === 'resident' ? '常驻任务' : '当天任务' }}
-        </span>
-        <span v-if="task.reminderTime" class="task-meta">
-          <Bell :size="14" />
-          {{ task.reminderTime }}
+        <span v-if="task.description" class="task-desc">{{ task.description }}</span>
+        <span v-if="showScope || task.reminderTime" class="task-meta-row">
+          <span v-if="showScope" class="task-meta">
+            {{ task.scope === 'resident' ? '常驻任务' : '当天任务' }}
+          </span>
+          <span v-if="task.reminderTime" class="task-meta">
+            <Bell :size="14" />
+            {{ task.reminderTime }}
+          </span>
         </span>
       </span>
       <span v-if="task.checked" class="expand-icon">
@@ -65,6 +69,10 @@ function handleClick(task: Task) {
 
     <!-- Expanded checkin details -->
     <div v-if="task.checked && expanded" class="checkin-detail">
+      <div class="checkin-detail-header">
+        <span class="detail-label">本次打卡</span>
+        <span class="status-pill approved">已记录</span>
+      </div>
       <div v-if="task.photoUrl" class="detail-photo">
         <img :src="task.photoUrl" alt="打卡照片" loading="lazy" />
       </div>

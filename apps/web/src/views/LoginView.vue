@@ -34,7 +34,7 @@ async function submit() {
 
 <template>
   <main class="login-page">
-    <section class="login-panel">
+    <section class="login-panel login-card">
       <div class="login-hero">
         <div class="login-logo">
           <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
@@ -42,12 +42,24 @@ async function submit() {
           </svg>
         </div>
         <h1 class="login-brand">每日打卡</h1>
-        <p class="login-tagline">记录每天完成的小事</p>
+        <p class="login-tagline">把任务、目标、积分和每天的状态放在一个安静清楚的地方</p>
       </div>
 
+      <section class="login-highlight">
+        <div class="login-highlight-copy">
+          <span class="login-highlight-label">一个账户</span>
+          <strong>继续你的连续记录、目标进度和积分变化</strong>
+        </div>
+        <div class="login-highlight-meta">
+          <span>打卡</span>
+          <span>目标</span>
+          <span>积分</span>
+        </div>
+      </section>
+
       <div class="segmented">
-        <button :class="{ active: mode === 'login' }" @click="mode = 'login'">登录</button>
-        <button :class="{ active: mode === 'register' }" @click="mode = 'register'">注册</button>
+        <button type="button" :class="{ active: mode === 'login' }" @click="mode = 'login'">登录</button>
+        <button type="button" :class="{ active: mode === 'register' }" @click="mode = 'register'">注册</button>
       </div>
 
       <form class="form" @submit.prevent="submit">
@@ -77,6 +89,9 @@ async function submit() {
           {{ busy ? '处理中…' : title }}
         </button>
       </form>
+      <p class="login-helper">
+        {{ mode === 'login' ? '用现有账号继续今天的记录。' : '注册后会立即进入今日页开始打卡。' }}
+      </p>
     </section>
   </main>
 </template>

@@ -21,7 +21,10 @@ export class UploadService {
   }
 
   deletePhoto(filename: string): void {
-    const filepath = join(UPLOAD_DIR, 'photos', filename);
+    // 防止路径穿越攻击：只允许纯文件名，不含路径分隔符
+    const sanitized = this.sanitizeFilename(filename);
+    if (!sanitized) return;
+    const filepath = join(UPLOAD_DIR, 'photos', sanitized);
     if (existsSync(filepath)) {
       unlinkSync(filepath);
     }
@@ -29,6 +32,16 @@ export class UploadService {
 
   extractFilenameFromUrl(url: string): string | null {
     const match = url.match(/\/api\/uploads\/photos\/(.+)$/);
-    return match ? match[1] : null;
+    if (!match) return null;
+    return this.sanitizeFilename(match[1]);
+  }
+
+  /** 校验文件名：拒绝路径穿越和空文件名 */
+  private sanitizeFilename(name: string): string | null {
+    if (!name || name.includes('/') || name.includes('\\') || name.includes('..')) {
+      return null;
+    }
+    const trimmed = name.trim();
+    return trimmed.length > 0 ? trimmed : null;
   }
 }

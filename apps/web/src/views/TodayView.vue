@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import PageShell from '../components/PageShell.vue';
 import TaskRow from '../components/TaskRow.vue';
 import CheckinModal from '../components/CheckinModal.vue';
+import StatePanel from '../components/StatePanel.vue';
 import { api, ApiError } from '../api';
 import { formatLocalDate } from '../lib/date';
 import { summarizeToday } from '../lib/progress';
@@ -20,6 +21,8 @@ const busyTaskId = ref<number | null>(null);
 const loading = ref(true);
 const loadError = ref('');
 const todayProgress = computed(() => summarizeToday(tasks.value));
+const pendingTasks = computed(() => tasks.value.filter((task) => !task.checked));
+const completedTasks = computed(() => tasks.value.filter((task) => task.checked));
 const allDone = computed(() => todayProgress.value.total > 0 && todayProgress.value.completed === todayProgress.value.total);
 
 // Time-based greeting
@@ -116,85 +119,118 @@ onMounted(load);
 
 <template>
   <PageShell :title="greeting" :eyebrow="stats?.today ?? today">
-    <!-- Stats -->
-    <section class="stats-row">
-      <div class="stat-card">
-        <span class="stat-label">完成</span>
-        <strong class="stat-value">{{ todayProgress.completed }}<small>/{{ todayProgress.total }}</small></strong>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">连续</span>
-        <strong class="stat-value">{{ stats?.currentStreak ?? 0 }}<small>天</small></strong>
-      </div>
-      <div class="stat-card stat-card--accent">
-        <span class="stat-label">积分</span>
-        <strong class="stat-value">{{ auth.user?.points ?? 0 }}</strong>
-      </div>
-    </section>
+    <div class="today-layout">
+      <section class="today-overview">
+        <div class="today-hero-card">
+          <div class="today-hero-head">
+            <div>
+              <p class="today-hero-label">今日节奏</p>
+              <h2 class="today-hero-title">{{ todayProgress.completed }}/{{ todayProgress.total }}</h2>
+              <p class="today-hero-copy">今天的常驻和当天任务都在这里，完成进度会即时更新。</p>
+            </div>
+            <div class="today-hero-side">
+              <span>最佳连续</span>
+              <strong>{{ stats?.bestStreak ?? 0 }} 天</strong>
+            </div>
+          </div>
+          <div class="today-hero-meter" aria-label="今日完成进度">
+            <div class="progress-bar">
+              <div class="progress-fill" :style="{ width: `${todayProgress.percent}%` }" />
+            </div>
+            <span class="progress-label">{{ todayProgress.percent }}%</span>
+          </div>
+        </div>
 
-    <!-- Progress -->
-    <div class="progress-bar-wrap" aria-label="今日完成进度">
-      <div class="progress-bar">
-        <div class="progress-fill" :style="{ width: `${todayProgress.percent}%` }" />
-      </div>
-      <span class="progress-label">{{ todayProgress.percent }}%</span>
+        <section class="stats-row">
+          <div class="stat-card">
+            <span class="stat-label">完成</span>
+            <strong class="stat-value">{{ todayProgress.completed }}<small>/{{ todayProgress.total }}</small></strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">连续</span>
+            <strong class="stat-value">{{ stats?.currentStreak ?? 0 }}<small>天</small></strong>
+          </div>
+          <div class="stat-card stat-card--accent">
+            <span class="stat-label">积分</span>
+            <strong class="stat-value">{{ auth.user?.points ?? 0 }}</strong>
+          </div>
+        </section>
+
+        <section v-if="goals.length" class="today-goals">
+          <article v-for="goal in goals.slice(0, 2)" :key="goal.id" class="goal-strip" :class="goal.status">
+            <div>
+              <span>{{ goal.status === 'completed' ? '已完成' : goal.status === 'overdue' ? '已超期' : '目标倒计时' }}</span>
+              <strong>{{ goal.title }}</strong>
+            </div>
+            <div class="goal-strip-meter">
+              <i :style="{ width: `${goal.percent}%` }" />
+            </div>
+            <b>{{ goal.daysLeft }} 天</b>
+          </article>
+        </section>
+      </section>
+
+      <section class="today-main">
+        <section v-if="loading" class="task-list">
+          <div v-for="i in 3" :key="i" class="skeleton-row" />
+        </section>
+
+        <StatePanel v-else-if="loadError" title="今天的数据没有加载出来" :description="loadError" compact>
+          <button class="secondary-button" type="button" @click="load">重新加载</button>
+        </StatePanel>
+
+        <StatePanel
+          v-else-if="tasks.length === 0"
+          title="今天还没有任务"
+          description="先添加常驻任务或当天任务，打卡页才会开始累计进度。"
+          compact
+        >
+          <RouterLink to="/tasks" class="secondary-button">添加任务</RouterLink>
+        </StatePanel>
+
+        <template v-else>
+          <section v-if="allDone" class="celebration">
+            <div class="celebration-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#b08520" stroke="#b08520" stroke-width="1"/>
+              </svg>
+            </div>
+            <span>今天全部完成</span>
+          </section>
+
+          <section v-if="pendingTasks.length" class="task-section">
+            <h3>待打卡</h3>
+            <TaskRow
+              v-for="task in pendingTasks"
+              :key="task.id"
+              :task="task"
+              :busy="busyTaskId === task.id"
+              :show-scope="true"
+              @toggle="toggle"
+              @open-checkin="openCheckin"
+            />
+          </section>
+
+          <section v-if="completedTasks.length" class="task-section task-section--completed">
+            <div class="page-intro compact">
+              <h2>今天记录</h2>
+              <p>{{ completedTasks.length }} 项已完成，展开后可以查看照片和小记。</p>
+            </div>
+            <div class="task-list completed-task-list">
+              <TaskRow
+                v-for="task in completedTasks"
+                :key="task.id"
+                :task="task"
+                :busy="busyTaskId === task.id"
+                :show-scope="true"
+                @toggle="toggle"
+                @open-checkin="openCheckin"
+              />
+            </div>
+          </section>
+        </template>
+      </section>
     </div>
-
-    <!-- Goals strip -->
-    <section v-if="goals.length" class="today-goals">
-      <article v-for="goal in goals.slice(0, 2)" :key="goal.id" class="goal-strip" :class="goal.status">
-        <div>
-          <span>{{ goal.status === 'completed' ? '已完成' : goal.status === 'overdue' ? '已超期' : '目标倒计时' }}</span>
-          <strong>{{ goal.title }}</strong>
-        </div>
-        <div class="goal-strip-meter">
-          <i :style="{ width: `${goal.percent}%` }" />
-        </div>
-        <b>{{ goal.daysLeft }} 天</b>
-      </article>
-    </section>
-
-    <!-- Loading skeleton -->
-    <section v-if="loading" class="task-list">
-      <div v-for="i in 3" :key="i" class="skeleton-row" />
-    </section>
-
-    <!-- Error state -->
-    <section v-else-if="loadError" class="empty-state actionable-empty">
-      <span>{{ loadError }}</span>
-      <button class="secondary-button" type="button" @click="load">重新加载</button>
-    </section>
-
-    <!-- Empty state -->
-    <section v-else-if="tasks.length === 0" class="empty-state actionable-empty">
-      <span>还没有任务，去添加一个开始打卡吧</span>
-      <RouterLink to="/tasks" class="secondary-button">添加任务</RouterLink>
-    </section>
-
-    <template v-else>
-      <!-- All done celebration -->
-      <section v-if="allDone" class="celebration">
-        <div class="celebration-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#b08520" stroke="#b08520" stroke-width="1"/>
-          </svg>
-        </div>
-        <span>今天全部完成</span>
-      </section>
-
-      <!-- Task list -->
-      <section class="task-list">
-        <TaskRow
-          v-for="task in tasks"
-          :key="task.id"
-          :task="task"
-          :busy="busyTaskId === task.id"
-          :show-scope="true"
-          @toggle="toggle"
-          @open-checkin="openCheckin"
-        />
-      </section>
-    </template>
 
     <CheckinModal
       v-if="modalTask"
