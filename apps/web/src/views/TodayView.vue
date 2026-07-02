@@ -20,6 +20,7 @@ const stats = ref<StatsSummary | null>(null);
 const busyTaskId = ref<number | null>(null);
 const loading = ref(true);
 const loadError = ref('');
+const skipBusyId = ref<number | null>(null);
 const todayProgress = computed(() => summarizeToday(tasks.value));
 const pendingTasks = computed(() => tasks.value.filter((task) => !task.checked));
 const completedTasks = computed(() => tasks.value.filter((task) => task.checked));
@@ -114,6 +115,19 @@ async function toggle(task: Task) {
   }
 }
 
+async function skipTask(task: Task) {
+  skipBusyId.value = task.id;
+  try {
+    await api.post(`/tasks/${task.id}/skip`, { date: today });
+    showToast(`已跳过「${task.title}」`);
+    await load();
+  } catch (err) {
+    showToast(err instanceof ApiError ? err.message : '跳过失败', 'error');
+  } finally {
+    skipBusyId.value = null;
+  }
+}
+
 onMounted(load);
 </script>
 
@@ -205,9 +219,11 @@ onMounted(load);
               :key="task.id"
               :task="task"
               :busy="busyTaskId === task.id"
+              :skip-busy="skipBusyId === task.id"
               :show-scope="true"
               @toggle="toggle"
               @open-checkin="openCheckin"
+              @skip="skipTask"
             />
           </section>
 

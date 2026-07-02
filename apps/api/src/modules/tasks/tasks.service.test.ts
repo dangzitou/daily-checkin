@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { TasksService } from './tasks.service';
 
 describe('TasksService', () => {
-  it('lists active resident tasks and dated tasks for the requested date with that date checkin state', async () => {
+  it('lists active tasks filtered by visibility for the requested date', async () => {
     const prisma = {
       task: {
         findMany: vi.fn().mockResolvedValue([
@@ -12,9 +12,13 @@ describe('TasksService', () => {
             description: null,
             scope: 'resident',
             scheduledDate: null,
+            repeatDays: null,
+            startDate: null,
             reminderTime: '21:00',
             sortOrder: 0,
-            checkins: [{ id: 11, checkedAt: new Date('2026-06-12T10:00:00.000Z'), photoUrl: null, mood: null, note: null }]
+            isActive: true,
+            checkins: [{ id: 11, checkedAt: new Date('2026-06-12T10:00:00.000Z'), photoUrl: null, mood: null, note: null }],
+            skips: [],
           },
           {
             id: 2,
@@ -22,9 +26,13 @@ describe('TasksService', () => {
             description: '周五',
             scope: 'dated',
             scheduledDate: '2026-06-12',
+            repeatDays: null,
+            startDate: null,
             reminderTime: null,
             sortOrder: 1,
-            checkins: []
+            isActive: true,
+            checkins: [],
+            skips: [],
           }
         ])
       }
@@ -34,16 +42,16 @@ describe('TasksService', () => {
     const result = await service.list(7, '2026-06-12');
 
     expect(prisma.task.findMany).toHaveBeenCalledWith({
-      where: {
-        userId: 7,
-        isActive: true,
-        OR: [{ scope: 'resident' }, { scope: 'dated', scheduledDate: '2026-06-12' }]
-      },
+      where: { userId: 7, isActive: true },
       orderBy: [{ scope: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
       include: {
         checkins: {
           where: { userId: 7, checkinDate: '2026-06-12' },
           select: { id: true, checkedAt: true, photoUrl: true, mood: true, note: true }
+        },
+        skips: {
+          where: { userId: 7, skipDate: '2026-06-12' },
+          select: { id: true }
         }
       }
     });
@@ -54,6 +62,8 @@ describe('TasksService', () => {
         description: null,
         scope: 'resident',
         scheduledDate: null,
+        repeatDays: null,
+        startDate: null,
         reminderTime: '21:00',
         sortOrder: 0,
         checked: true,
@@ -70,6 +80,8 @@ describe('TasksService', () => {
         description: '周五',
         scope: 'dated',
         scheduledDate: '2026-06-12',
+        repeatDays: null,
+        startDate: null,
         reminderTime: null,
         sortOrder: 1,
         checked: false,

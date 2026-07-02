@@ -210,8 +210,10 @@ export class CheckinsService {
       return tasks.filter((task) =>
         isTaskVisibleOnDate({
           isActive: task.isActive,
-          scope: task.scope as 'resident' | 'dated',
+          scope: task.scope as any,
           scheduledDate: task.scheduledDate,
+          repeatDays: (task as any).repeatDays,
+          startDate: (task as any).startDate,
           date
         })
       ).length;
@@ -238,8 +240,10 @@ export class CheckinsService {
         const totalTasks = tasks.filter((task) =>
           isTaskVisibleOnDate({
             isActive: task.isActive,
-            scope: task.scope as 'resident' | 'dated',
+            scope: task.scope as any,
             scheduledDate: task.scheduledDate,
+            repeatDays: task.repeatDays,
+            startDate: task.startDate,
             date
           })
         ).length;
@@ -278,8 +282,10 @@ export class CheckinsService {
 
     const visible = isTaskVisibleOnDate({
       isActive: task.isActive,
-      scope: task.scope as 'resident' | 'dated',
+      scope: task.scope as any,
       scheduledDate: task.scheduledDate,
+      repeatDays: task.repeatDays,
+      startDate: task.startDate,
       date
     });
 

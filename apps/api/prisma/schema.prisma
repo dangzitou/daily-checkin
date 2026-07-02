@@ -23,6 +23,7 @@ model User {
   redemptions  Redemption[]
   likes        Like[]
   comments     Comment[]
+  skips        TaskSkip[]
 
   @@map("users")
 }
@@ -34,6 +35,8 @@ model Task {
   description  String?   @db.VarChar(500)
   scope        String    @default("resident") @db.VarChar(16)
   scheduledDate String?  @map("scheduled_date") @db.VarChar(10)
+  repeatDays   String?   @map("repeat_days") @db.VarChar(64)
+  startDate    String?   @map("start_date") @db.VarChar(10)
   reminderTime String?   @map("reminder_time") @db.VarChar(5)
   isActive     Boolean   @default(true) @map("is_active")
   sortOrder    Int       @default(0) @map("sort_order")
@@ -42,6 +45,7 @@ model Task {
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   checkins     Checkin[]
   goals        Goal[]
+  skips        TaskSkip[]
 
   @@index([userId])
   @@index([userId, scope, scheduledDate])
@@ -156,4 +160,18 @@ model Comment {
   @@index([checkinId])
   @@index([userId])
   @@map("comments")
+}
+
+model TaskSkip {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  taskId    Int      @map("task_id")
+  skipDate  String   @map("skip_date") @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId, skipDate])
+  @@index([userId, skipDate])
+  @@map("task_skips")
 }

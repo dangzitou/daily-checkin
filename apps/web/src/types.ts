@@ -45,12 +45,16 @@ export const MOOD_OPTIONS = [
 
 export type MoodEmoji = (typeof MOOD_OPTIONS)[number]['emoji'];
 
+export type TaskScope = 'resident' | 'dated' | 'weekly' | 'monthly';
+
 export interface Task {
   id: number;
   title: string;
   description: string | null;
-  scope: 'resident' | 'dated';
+  scope: TaskScope;
   scheduledDate: string | null;
+  repeatDays: string | null; // JSON array, e.g. "[1,3,5]"
+  startDate: string | null;
   reminderTime: string | null;
   sortOrder: number;
   checked: boolean;

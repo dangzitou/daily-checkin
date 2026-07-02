@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Bell, Check, Circle, ChevronDown, ChevronUp, Image } from 'lucide-vue-next';
+import { Bell, Check, Circle, ChevronDown, ChevronUp, Image, SkipForward } from 'lucide-vue-next';
 import type { Task } from '../types';
 
 defineProps<{
   task: Task;
   busy?: boolean;
+  skipBusy?: boolean;
   showScope?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'toggle', task: Task): void;
   (e: 'openCheckin', task: Task): void;
+  (e: 'skip', task: Task): void;
 }>();
 
 const expanded = ref(false);
@@ -22,6 +24,10 @@ function handleClick(task: Task) {
   } else {
     emit('openCheckin', task);
   }
+}
+
+function scopeLabel(scope: string): string {
+  return { resident: '常驻任务', weekly: '周任务', monthly: '月任务', dated: '当天任务' }[scope] ?? scope;
 }
 </script>
 
@@ -53,7 +59,7 @@ function handleClick(task: Task) {
         <span v-if="task.description" class="task-desc">{{ task.description }}</span>
         <span v-if="showScope || task.reminderTime" class="task-meta-row">
           <span v-if="showScope" class="task-meta">
-            {{ task.scope === 'resident' ? '常驻任务' : '当天任务' }}
+            {{ scopeLabel(task.scope) }}
           </span>
           <span v-if="task.reminderTime" class="task-meta">
             <Bell :size="14" />
@@ -65,6 +71,18 @@ function handleClick(task: Task) {
         <ChevronUp v-if="expanded" :size="16" />
         <ChevronDown v-else :size="16" />
       </span>
+    </button>
+
+    <!-- 跳过按钮（仅未完成任务显示） -->
+    <button
+      v-if="!task.checked"
+      class="skip-btn"
+      :disabled="skipBusy"
+      :aria-label="`跳过 ${task.title}`"
+      @click.stop="$emit('skip', task)"
+    >
+      <SkipForward :size="14" />
+      <span>跳过</span>
     </button>
 
     <!-- Expanded checkin details -->
@@ -88,3 +106,42 @@ function handleClick(task: Task) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.skip-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, background 180ms ease;
+}
+
+.task-row-wrapper:hover .skip-btn {
+  opacity: 1;
+}
+
+.skip-btn:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.skip-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.task-row-wrapper {
+  position: relative;
+}
+</style>
