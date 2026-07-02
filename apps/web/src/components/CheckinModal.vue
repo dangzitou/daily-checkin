@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Camera, X, Image } from 'lucide-vue-next';
 import { MOOD_OPTIONS } from '../types';
 import type { MoodEmoji, Task } from '../types';
@@ -20,6 +20,17 @@ const note = ref('');
 const photoFile = ref<File | null>(null);
 const photoPreview = ref<string | null>(null);
 const photoError = ref('');
+
+// 每次打开弹窗时重置状态，防止残留上次任务的数据
+watch(() => props.visible, (v) => {
+  if (v) {
+    selectedMood.value = null;
+    note.value = '';
+    photoFile.value = null;
+    photoPreview.value = null;
+    photoError.value = '';
+  }
+});
 
 const noteLength = computed(() => note.value.length);
 const isSubmitting = computed(() => props.loading ?? false);

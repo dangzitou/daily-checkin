@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { RefreshCw } from 'lucide-vue-next';
 import PageShell from '../components/PageShell.vue';
 import StatePanel from '../components/StatePanel.vue';
 import { api } from '../api';
@@ -9,12 +10,16 @@ import type { PointLog } from '../types';
 const auth = useAuthStore();
 const logs = ref<PointLog[]>([]);
 const loading = ref(true);
+const loadError = ref('');
 
 async function load() {
   loading.value = true;
+  loadError.value = '';
   try {
     const result = await api.get<{ logs: PointLog[] }>('/points/logs');
     logs.value = result.logs;
+  } catch (err) {
+    loadError.value = err instanceof Error ? err.message : '加载失败';
   } finally {
     loading.value = false;
   }
@@ -54,6 +59,12 @@ onMounted(load);
       <section v-if="loading" class="log-list">
         <div v-for="i in 4" :key="i" class="skeleton-row short" />
       </section>
+      <StatePanel v-else-if="loadError" title="积分记录加载失败" :description="loadError" compact>
+        <button class="secondary-button" type="button" @click="load">
+          <RefreshCw :size="18" />
+          重新加载
+        </button>
+      </StatePanel>
       <StatePanel v-else-if="logs.length === 0" title="还没有积分记录" description="完成打卡后，这里会显示每一笔积分变化。" compact />
       <section v-else class="log-list">
         <article v-for="log in logs" :key="log.id" class="log-item">

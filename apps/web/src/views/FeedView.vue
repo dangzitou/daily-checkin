@@ -23,7 +23,7 @@ const submittingComment = ref<Set<number>>(new Set());
 
 async function load(append = false) {
   if (append) loadingMore.value = true;
-  else { loading.value = true; loadError.value = ''; }
+  else { loading.value = true; loadError.value = ''; page.value = 1; }
 
   try {
     const res = await api.get<{ items: FeedItem[]; hasMore: boolean; page: number }>(

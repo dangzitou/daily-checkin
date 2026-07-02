@@ -12,6 +12,7 @@ const loading = ref(true);
 const showForm = ref(false);
 const editingId = ref<number | null>(null);
 const formError = ref('');
+const actionError = ref('');
 const busyAction = ref(false);
 const deleteTarget = ref<Prize | null>(null);
 
@@ -85,8 +86,16 @@ async function submitForm() {
 }
 
 async function toggleActive(prize: Prize) {
-  await api.put(`/prizes/${prize.id}`, { isActive: !prize.isActive });
-  await load();
+  busyAction.value = true;
+  actionError.value = '';
+  try {
+    await api.put(`/prizes/${prize.id}`, { isActive: !prize.isActive });
+    await load();
+  } catch (e) {
+    actionError.value = e instanceof ApiError ? e.message : '操作失败';
+  } finally {
+    busyAction.value = false;
+  }
 }
 
 async function removePrize(prize: Prize) {
@@ -111,9 +120,12 @@ async function confirmDelete() {
 
 async function updateRedemptionStatus(r: Redemption, status: string) {
   busyAction.value = true;
+  actionError.value = '';
   try {
     await api.put(`/redemptions/${r.id}/status`, { status });
     await load();
+  } catch (e) {
+    actionError.value = e instanceof ApiError ? e.message : '状态更新失败';
   } finally {
     busyAction.value = false;
   }
@@ -141,6 +153,7 @@ onMounted(load);
     </nav>
 
     <StatePanel v-if="loading" title="正在加载奖品后台" description="奖品和兑换订单正在同步。" compact />
+    <p v-if="actionError" class="error-text" style="margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; background: #fdf0f0;">{{ actionError }}</p>
 
     <template v-else-if="activeTab === 'prizes'">
       <div class="admin-stack">
