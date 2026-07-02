@@ -54,10 +54,13 @@ export class PrizesService {
   }
 
   async decrementStock(id: number) {
-    return this.prisma.prize.update({
-      where: { id },
-      data: { stock: { decrement: 1 } },
-    });
+    // 使用 WHERE stock > 0 防止负库存
+    const updated = await this.prisma.$executeRaw`
+      UPDATE Prize SET stock = stock - 1 WHERE id = ${id} AND stock > 0
+    `;
+    if (updated === 0) {
+      throw new BadRequestException('奖品库存不足');
+    }
   }
 
   /**

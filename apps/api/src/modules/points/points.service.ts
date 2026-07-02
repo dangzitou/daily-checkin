@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { todayInShanghai } from '../../domain/dates';
 
 export const POINTS_PER_CHECKIN = 10;
 export const STREAK_BONUS_THRESHOLD = 7;
@@ -32,20 +33,24 @@ export class PointsService {
   }
 
   async deductPoints(userId: number, amount: number, reason: string): Promise<void> {
-    const balance = await this.getBalance(userId);
-    if (balance < amount) {
-      throw new BadRequestException('积分不足');
-    }
-
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    // 余额检查和扣减在同一事务中，防止并发导致负余额
+    await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { points: true },
+      });
+      const balance = user?.points ?? 0;
+      if (balance < amount) {
+        throw new BadRequestException('积分不足');
+      }
+      await tx.user.update({
         where: { id: userId },
         data: { points: { decrement: amount } },
-      }),
-      this.prisma.pointLog.create({
+      });
+      await tx.pointLog.create({
         data: { userId, amount: -amount, reason },
-      }),
-    ]);
+      });
+    });
   }
 
   /**
@@ -86,11 +91,11 @@ export class PointsService {
   }
 
   /**
-   * 获取用户今日已获取的积分总额（使用上海时区，依赖 TZ=Asia/Shanghai 环境变量）。
+   * 获取用户今日已获取的积分总额（使用上海时区）。
    */
   async getTodayEarned(userId: number): Promise<number> {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const today = todayInShanghai(); // "YYYY-MM-DD"
+    const todayStart = new Date(`${today}T00:00:00+08:00`);
 
     const result = await this.prisma.pointLog.aggregate({
       _sum: { amount: true },

@@ -35,38 +35,40 @@ export class CheckinsService {
     const checkinDate = validateIsoDateForRequest(dateInput);
     await this.ensureVisibleTask(userId, taskId, checkinDate);
 
-    // Check if already checked in
-    const existing = await this.prisma.checkin.findUnique({
-      where: { userId_taskId_checkinDate: { userId, taskId, checkinDate } },
-    });
+    // 利用唯一约束原子性地防止重复签到（竞态安全）
+    try {
+      const checkin = await this.prisma.checkin.create({
+        data: {
+          userId,
+          taskId,
+          checkinDate,
+          photoUrl: options?.photoPath,
+          mood: options?.mood,
+          note: options?.note,
+        },
+      });
 
-    if (existing) {
-      return { ...existing, pointsEarned: 0 };
+      // Only award points for today's checkin (prevent backdate farming)
+      const today = todayInShanghai();
+      if (checkinDate !== today) {
+        return { ...checkin, pointsEarned: 0 };
+      }
+
+      // Calculate streak and add points
+      const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
+      const pointsEarned = await this.pointsService.addCheckinPoints(userId, streakDays);
+
+      return { ...checkin, pointsEarned };
+    } catch (e: any) {
+      // P2002 = 唯一约束冲突 = 已经签到过了
+      if (e?.code === 'P2002') {
+        const existing = await this.prisma.checkin.findUnique({
+          where: { userId_taskId_checkinDate: { userId, taskId, checkinDate } },
+        });
+        return { ...existing!, pointsEarned: 0 };
+      }
+      throw e;
     }
-
-    // Create checkin with optional photo/mood/note
-    const checkin = await this.prisma.checkin.create({
-      data: {
-        userId,
-        taskId,
-        checkinDate,
-        photoUrl: options?.photoPath,
-        mood: options?.mood,
-        note: options?.note,
-      },
-    });
-
-    // Only award points for today's checkin (prevent backdate farming)
-    const today = todayInShanghai();
-    if (checkinDate !== today) {
-      return { ...checkin, pointsEarned: 0 };
-    }
-
-    // Calculate streak and add points
-    const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
-    const pointsEarned = await this.pointsService.addCheckinPoints(userId, streakDays);
-
-    return { ...checkin, pointsEarned };
   }
 
   async updateCheckin(userId: number, checkinId: number, data: { mood?: string; note?: string; photoUrl?: string }) {
