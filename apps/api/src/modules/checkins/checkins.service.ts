@@ -33,7 +33,13 @@ export class CheckinsService {
 
   async checkOnDate(userId: number, taskId: number, dateInput: string, options?: CheckinOptions) {
     const checkinDate = validateIsoDateForRequest(dateInput);
-    await this.ensureVisibleTask(userId, taskId, checkinDate);
+    const task = await this.ensureVisibleTask(userId, taskId, checkinDate);
+
+    // 禁止签到未来日期
+    const today = todayInShanghai();
+    if (checkinDate > today) {
+      throw new NotFoundException('不能签到未来的日期');
+    }
 
     // 利用唯一约束原子性地防止重复签到（竞态安全）
     try {
@@ -49,13 +55,14 @@ export class CheckinsService {
       });
 
       // Only award points for today's checkin (prevent backdate farming)
-      const today = todayInShanghai();
       if (checkinDate !== today) {
         return { ...checkin, pointsEarned: 0 };
       }
 
-      // Calculate streak and add points
-      const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
+      // Calculate streak and add points (streak only applies to resident tasks)
+      const streakDays = task.scope === 'resident'
+        ? await this.calculateStreak(userId, taskId, checkinDate)
+        : 1;
       const pointsEarned = await this.pointsService.addCheckinPoints(userId, streakDays);
 
       return { ...checkin, pointsEarned };
@@ -115,7 +122,7 @@ export class CheckinsService {
 
   async uncheckOnDate(userId: number, taskId: number, dateInput: string) {
     const checkinDate = validateIsoDateForRequest(dateInput);
-    await this.ensureVisibleTask(userId, taskId, checkinDate);
+    const task = await this.ensureVisibleTask(userId, taskId, checkinDate);
 
     // Find existing checkin
     const existing = await this.prisma.checkin.findUnique({
@@ -130,7 +137,10 @@ export class CheckinsService {
     const today = todayInShanghai();
     let pointsToDeduct = 0;
     if (checkinDate === today) {
-      const streakDays = await this.calculateStreak(userId, taskId, checkinDate);
+      // streak 仅限 resident 任务
+      const streakDays = task.scope === 'resident'
+        ? await this.calculateStreak(userId, taskId, checkinDate)
+        : 1;
       pointsToDeduct = POINTS_PER_CHECKIN;
       if (streakDays >= STREAK_BONUS_THRESHOLD) {
         pointsToDeduct += STREAK_BONUS_POINTS;
